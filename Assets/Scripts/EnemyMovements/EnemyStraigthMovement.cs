@@ -3,11 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Enemy/Movement/Straight")]
 public class EnemyStraigthMovement : AbstractEnemyMovement
 {
-    public float velocidadeX;
-    public float velocidadeY;
+    public Vector2 direction = Vector2.down;
 
-    public override void Move(Rigidbody2D rb)
+    public override Vector2 GetDirection()
     {
-       rb.linearVelocity = new Vector2(velocidadeX, velocidadeY);
+        return direction.normalized;
     }
 }

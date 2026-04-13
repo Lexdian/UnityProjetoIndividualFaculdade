@@ -12,5 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55c34bf34fd5f1a40927130ce2a1c156, type: 3}
   m_Name: Down
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStraigthMovement
-  velocidadeX: 1
-  velocidadeY: -1
+  direction: {x: 0, y: -1}

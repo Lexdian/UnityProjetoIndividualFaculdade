@@ -2,21 +2,54 @@ using UnityEngine;
 
 public class BulletMovement : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    public float velocidadeY = 1f;
-    Rigidbody2D rb;
+    public float speed = 5f;
+    public float TimeToDeath = 3f;
 
-    public float TimeToDeath = 1f;
+    private Vector2 direction;
+    private Rigidbody2D rb;
+    private float timer;
+
+    private BulletPool pool;
+
+    public void SetDirection(Vector2 dir, float spd)
+    {
+        direction = dir.normalized;
+        speed = spd;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+    public void SetDirection(Vector2 dir)
+    {
+        direction = dir.normalized;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+    public void SetPool(BulletPool p)
+    {
+        pool = p;
+    }
+
+    void OnEnable()
+    {
+        timer = 0f;
+    }
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        Destroy(this, TimeToDeath);
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
-        rb.linearVelocity = new Vector2(0, velocidadeY);
+        rb.linearVelocity = direction * speed;
+
+        timer += Time.fixedDeltaTime;
+
+        if (timer >= TimeToDeath)
+        {
+            pool.ReturnBullet(gameObject);
+        }
     }
 }

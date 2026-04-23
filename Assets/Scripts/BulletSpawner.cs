@@ -3,116 +3,140 @@ using UnityEngine;
 public class BulletSpawner : MonoBehaviour
 {
     public GameObject bulletPrefab;
-
-    [Header("Configuração do círculo")]
-    public int directionsCount = 8;
-    public float spawnDistance = 1f;
-
-    [Header("Rajada")]
-    public int bulletsPerBurst = 3;
-    public float speedIncrement = 0.5f;
-    public float angleSpread = 5f;
-
-    [Header("Movimento")]
-    public float baseSpeed = 5f;
-    public float rotationSpeed = 30f;
-
-    [Header("Disparo")]
-    public float fireRate = 1f;
-
-    [Header("Deadzone")]
-    public float minYToShoot = 0f;
-
-    [Header("Target")]
-    public Transform target;
-
-    [Header("Pool")]
     public float bulletLifetime = 3f;
+    public Transform target;
+    public float minYToShoot = -2f;
+
+    [Header("Configurações de Áudio")]
+    public AudioClip somTiroInimigo;
+    [Range(0f, 1f)] public float volumeTiro = 0.4f;
+    private AudioSource audioSource;
 
     private float timer;
     private BulletPool pool;
 
-    void Start()
+    // Variáveis do Pattern
+    private bool aimAtPlayer;
+    private int directionsCount;
+    private int bulletsPerBurst;
+    private float fireRate;
+    private float rotationSpeed;
+    private float baseSpeed;
+    private float angleSpread;
+    private float speedIncrement;
+    private int shotsPerVolley;
+    private float timeBetweenVolleys;
+
+    private int currentVolleyCount = 0;
+    private bool isResting = false;
+
+    void OnEnable()
     {
-        // cria pool automaticamente
-        pool = gameObject.AddComponent<BulletPool>();
-        pool.bulletPrefab = bulletPrefab;
+        timer = 0;
+        currentVolleyCount = 0;
+        isResting = false;
 
-        int bulletsPerShot = directionsCount * bulletsPerBurst;
-        int poolSize = 300;
+        // Inicializa Áudio
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
 
-        pool.Initialize(poolSize);
+        if (pool == null)
+        {
+            pool = gameObject.AddComponent<BulletPool>();
+            pool.bulletPrefab = bulletPrefab;
+            pool.Initialize(100);
+        }
+
+        if (target == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null) target = p.transform;
+        }
     }
 
-    public void Setup(
-    int directions,
-    int burst,
-    float rate,
-    float rotation,
-    float speed
-)
+    public void ApplyPattern(ShootingPattern p)
     {
-        directionsCount = directions;
-        bulletsPerBurst = burst;
-        fireRate = rate;
-        rotationSpeed = rotation;
-        baseSpeed = speed;
+        aimAtPlayer = p.aimAtPlayer;
+        directionsCount = p.directions;
+        bulletsPerBurst = p.burst;
+        fireRate = p.fireRate;
+        rotationSpeed = p.rotationSpeed;
+        baseSpeed = p.bulletSpeed;
+        angleSpread = p.angleSpread;
+        speedIncrement = p.speedIncrement;
+        shotsPerVolley = p.shotsPerVolley;
+        timeBetweenVolleys = p.timeBetweenVolleys;
     }
 
     void Update()
     {
+        if (transform.position.y < minYToShoot) return;
+
         transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
 
-        if (transform.position.y < minYToShoot)
-            return;
-
         timer += Time.deltaTime;
-        if (timer >= fireRate)
+        float currentWaitTime = isResting ? timeBetweenVolleys : fireRate;
+
+        if (timer >= currentWaitTime)
         {
-            Shoot();
+            if (isResting) isResting = false;
+            else
+            {
+                Shoot();
+                currentVolleyCount++;
+                if (currentVolleyCount >= shotsPerVolley)
+                {
+                    isResting = true;
+                    currentVolleyCount = 0;
+                }
+            }
             timer = 0f;
         }
     }
 
     void Shoot()
     {
-        float angleStep = 360f / directionsCount;
-
-        Vector2 baseDirection = target != null
-            ? (target.position - transform.position).normalized
-            : Vector2.up;
-
-        float baseAngleOffset = Mathf.Atan2(baseDirection.y, baseDirection.x) * Mathf.Rad2Deg;
-
-        for (int directionIndex = 0; directionIndex < directionsCount; directionIndex++)
+        // Toca o som uma vez por "disparo" (independente de quantas direções saem)
+        // Isso evita que o som fique "estourado" em disparos circulares
+        if (somTiroInimigo != null && audioSource != null)
         {
-            float baseAngle = directionIndex * angleStep + baseAngleOffset + transform.eulerAngles.z;
+            audioSource.PlayOneShot(somTiroInimigo, volumeTiro);
+        }
 
-            for (int burstIndex = 0; burstIndex < bulletsPerBurst; burstIndex++)
+        float angleStep = (directionsCount > 1) ? 360f / directionsCount : 0f;
+        float baseAngle = -90f;
+
+        if (aimAtPlayer && target != null)
+        {
+            Vector2 dirToTarget = (target.position - transform.position).normalized;
+            baseAngle = Mathf.Atan2(dirToTarget.y, dirToTarget.x) * Mathf.Rad2Deg;
+        }
+
+        for (int i = 0; i < directionsCount; i++)
+        {
+            float currentDirectionAngle = baseAngle + (i * angleStep) + transform.eulerAngles.z;
+
+            for (int b = 0; b < bulletsPerBurst; b++)
             {
-                float angleOffset = (burstIndex - (bulletsPerBurst - 1) / 2f) * angleSpread;
-                float finalAngle = baseAngle + angleOffset;
+                float offset = (b - (bulletsPerBurst - 1) / 2f) * angleSpread;
+                float finalAngle = currentDirectionAngle + offset;
 
                 float rad = finalAngle * Mathf.Deg2Rad;
-
-                Vector2 direction = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-                Vector2 spawnPosition = (Vector2)transform.position + direction * spawnDistance;
+                Vector2 moveDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
                 GameObject bullet = pool.GetBullet();
+                if (bullet != null)
+                {
+                    bullet.transform.position = transform.position;
+                    BulletMovement bm = bullet.GetComponent<BulletMovement>();
+                    bm.SetPool(pool);
+                    bm.TimeToDeath = bulletLifetime;
 
-                bullet.transform.position = spawnPosition;
-
-                float finalSpeed = baseSpeed + burstIndex * speedIncrement;
-
-                BulletMovement bm = bullet.GetComponent<BulletMovement>();
-                bm.SetPool(pool);
-                bm.TimeToDeath = bulletLifetime;
-                bm.SetDirection(direction, finalSpeed);
+                    float finalSpeed = baseSpeed + (b * speedIncrement);
+                    bm.SetDirection(moveDir, finalSpeed);
+                }
             }
         }
-    }
-    public void ResetFireTimer(float value)
-    {
-        timer = value;
     }
 }

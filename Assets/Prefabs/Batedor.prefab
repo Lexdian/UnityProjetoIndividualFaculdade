@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 1100158597221547090}
   - component: {fileID: 4457895740609910011}
   - component: {fileID: 813809396609372034}
+  - component: {fileID: 1887939985196493350}
+  - component: {fileID: 7336145238656798503}
   - component: {fileID: 9050092510870287975}
   m_Layer: 0
   m_Name: Batedor
@@ -32,7 +34,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.5, y: 3.975, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 248446517854195193}
@@ -87,12 +89,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1666471526321087639, guid: 38800d2f9f6fab345a4961a109ff86f8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 38800d2f9f6fab345a4961a109ff86f8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.48, y: 0.48}
+  m_Size: {x: 3, y: 3}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -132,7 +134,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.3, y: 0.48}
+  m_Size: {x: 2, y: 3}
   m_Direction: 0
 --- !u!114 &1100158597221547090
 MonoBehaviour:
@@ -146,7 +148,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee0bd9de5b696d2448d854248300152d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBasics
-  Health: 3
+  maxHealth: 3
+  coletavel: {fileID: 6878971101872763187, guid: 4f002eae46649044d890e442551f08ed, type: 3}
+  somExplosao: {fileID: 8300000, guid: 75aa894192c30634d991064fa5eaa3fc, type: 3}
+  volumeExplosao: 0.7
 --- !u!50 &4457895740609910011
 Rigidbody2D:
   serializedVersion: 5
@@ -188,6 +193,69 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
   speed: 2
   movementPattern: {fileID: 11400000, guid: 245621dc6690a834c897b4e3f012ed14, type: 2}
+--- !u!114 &1887939985196493350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 117855357397829625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc5ad8987cd13ab4e990e095021fe2df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BulletSpawner
+  bulletPrefab: {fileID: 16094397416525084, guid: 188af5dc0f1803442a54ae236afddbdd, type: 3}
+  bulletLifetime: 3
+  target: {fileID: 0}
+  minYToShoot: -3
+  somTiroInimigo: {fileID: 8300000, guid: 26e43d28d5890aa489dc1ada79e0a53a, type: 3}
+  volumeTiro: 0.1
+--- !u!114 &7336145238656798503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 117855357397829625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2602328b6ba22a746bea9a737c0bc3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDifficultySettings
+  facil:
+    aimAtPlayer: 1
+    directions: 1
+    burst: 1
+    fireRate: 1
+    rotationSpeed: 0
+    bulletSpeed: 5
+    angleSpread: 0
+    speedIncrement: 0.5
+    shotsPerVolley: 0
+    timeBetweenVolleys: 0
+  medio:
+    aimAtPlayer: 1
+    directions: 1
+    burst: 3
+    fireRate: 0.75
+    rotationSpeed: 0
+    bulletSpeed: 5
+    angleSpread: 0
+    speedIncrement: 0.5
+    shotsPerVolley: 0
+    timeBetweenVolleys: 0
+  dificil:
+    aimAtPlayer: 1
+    directions: 1
+    burst: 5
+    fireRate: 0.5
+    rotationSpeed: 0
+    bulletSpeed: 5
+    angleSpread: 0
+    speedIncrement: 0.5
+    shotsPerVolley: 0
+    timeBetweenVolleys: 0
 --- !u!95 &9050092510870287975
 Animator:
   serializedVersion: 7
@@ -255,14 +323,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BulletSpawner
   bulletPrefab: {fileID: 16094397416525084, guid: 188af5dc0f1803442a54ae236afddbdd, type: 3}
-  directionsCount: 8
-  spawnDistance: 1
-  bulletsPerBurst: 3
-  speedIncrement: 0.5
-  angleSpread: 5
-  baseSpeed: 1
-  rotationSpeed: 60
-  fireRate: 1
-  minYToShoot: -3
-  target: {fileID: 0}
   bulletLifetime: 5
+  target: {fileID: 0}
+  minYToShoot: -2
+  somTiroInimigo: {fileID: 0}
+  volumeTiro: 0.4

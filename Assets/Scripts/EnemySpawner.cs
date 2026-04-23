@@ -2,102 +2,92 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [Header("Pool")]
-    public EnemyPool pool;
+    [System.Serializable]
+    public class EnemyType
+    {
+        public string name;
+        public GameObject prefab;
+    }
 
-    [Header("Spawn")]
-    public float spawnRate = 2f;
-    public float minSpawnRate = 0.5f;
-    public float difficultyIncreaseRate = 0.05f;
+    [Header("Configurações de Spawn")]
+    public EnemyType[] enemies;
+    public float initialSpawnRate = 2f;    // Velocidade inicial
+    public float minSpawnRate = 0.5f;      // Velocidade máxima permitida
+    public float spawnDecay = 0.05f;       // Quanto diminui a cada novo inimigo
 
-    public float spawnRangeX = 8f;
-    public float spawnY = 6f;
-
-    [Header("Movimento")]
-    public AbstractEnemyMovement[] movementOptions;
-
-    private float timer = 0f;
+    private float currentSpawnRate;
+    private float spawnTimer = 0f;
     private float difficultyTimer = 0f;
+    private Camera mainCam;
 
     void Start()
     {
-        pool.Initialize();
+        mainCam = Camera.main;
+        currentSpawnRate = initialSpawnRate;
 
-        SpawnEnemy();
+        // Regra: Não esperar o valor inicial para o primeiro inimigo
+        // Forçamos o timer a ser igual ao rate para disparar no primeiro frame do Update
+        spawnTimer = currentSpawnRate;
     }
 
     void Update()
     {
-        timer += Time.deltaTime;
-        difficultyTimer += Time.deltaTime;
+        if (enemies.Length == 0) return;
 
-        if (timer >= spawnRate)
+        difficultyTimer += Time.deltaTime;
+        spawnTimer += Time.deltaTime;
+
+        if (spawnTimer >= currentSpawnRate)
         {
             SpawnEnemy();
-            timer = 0f;
-        }
 
-        if (spawnRate > minSpawnRate)
+            // Reduz o tempo de espera para o próximo inimigo
+            AccelerateSpawn();
+
+            spawnTimer = 0f;
+        }
+    }
+
+    void AccelerateSpawn()
+    {
+        // Diminui o tempo atual, mas garante que não ultrapasse o mínimo
+        if (currentSpawnRate > minSpawnRate)
         {
-            spawnRate -= difficultyIncreaseRate * Time.deltaTime;
+            currentSpawnRate -= spawnDecay;
+
+            // Trava no valor mínimo para não ficar negativo ou impossível
+            if (currentSpawnRate < minSpawnRate)
+            {
+                currentSpawnRate = minSpawnRate;
+            }
         }
     }
 
     void SpawnEnemy()
     {
-        GameObject enemyObj = pool.GetEnemy();
+        if (EnemyPool.Instance == null) return;
 
-        float x = Random.Range(-spawnRangeX, spawnRangeX);
-        enemyObj.transform.position = new Vector2(x, spawnY);
+        int randomIndex = Random.Range(0, enemies.Length);
+        GameObject selectedPrefab = enemies[randomIndex].prefab;
 
-        EnemyMovement movement = enemyObj.GetComponent<EnemyMovement>();
+        GameObject enemyObj = EnemyPool.Instance.GetEnemy(selectedPrefab);
 
-        int randomIndex = Random.Range(0, movementOptions.Length);
-        movement.Setup(movementOptions[randomIndex]);
+        // Posicionamento na tela
+        float minX = mainCam.ViewportToWorldPoint(new Vector3(0.1f, 0, 0)).x;
+        float maxX = mainCam.ViewportToWorldPoint(new Vector3(0.9f, 0, 0)).x;
+        enemyObj.transform.position = new Vector2(Random.Range(minX, maxX), 6f);
 
-        enemyObj.GetComponent<EnemyBasics>().Health = 3;
+        // Define o nível baseado no tempo (20s = médio, 40s = difícil)
+        int level = 1;
+        if (difficultyTimer > 20f) level = 2;
+        if (difficultyTimer > 40f) level = 3;
 
-        BulletSpawner shooter = enemyObj.GetComponentInChildren<BulletSpawner>();
+        var settings = enemyObj.GetComponent<EnemyDifficultySettings>();
+        var shooter = enemyObj.GetComponentInChildren<BulletSpawner>();
 
-        if (shooter != null)
+        if (settings != null && shooter != null)
         {
-            float difficulty = difficultyTimer;
-            int level = Mathf.FloorToInt(difficulty / 10f);
-
-            int directions = 4;
-            int burst = 1;
-
-            if (level >= 1)
-            {
-                directions = Random.Range(4, 6);
-                burst = Random.Range(1, 2);
-            }
-
-            if (level >= 2)
-            {
-                directions = Random.Range(5, 7);
-                burst = Random.Range(1, 3);
-            }
-
-            if (level >= 3)
-            {
-                directions = Random.Range(6, 9);
-                burst = Random.Range(2, 4);
-            }
-
-            if (level >= 4)
-            {
-                directions = Random.Range(8, 12);
-                burst = Random.Range(2, 5);
-            }
-
-            float fireRate = Mathf.Max(0.3f, 1.5f - level * 0.2f);
-            float rotation = Random.Range(-1f, 1f) * (20f + level * 10f);
-            float bulletSpeed = 1f + level * 0.5f;
-
-            shooter.Setup(directions, burst, fireRate, rotation, bulletSpeed);
-
-            shooter.ResetFireTimer(Random.Range(0f, fireRate));
+            shooter.ApplyPattern(settings.GetPattern(level));
         }
     }
 }

@@ -3,24 +3,25 @@ using UnityEngine;
 
 public class EnemyPool : MonoBehaviour
 {
-    public GameObject enemyPrefab;
-    public int poolSize = 20;
+    public static EnemyPool Instance;
 
-    private List<GameObject> pool = new List<GameObject>();
+    private Dictionary<string, List<GameObject>> pools = new Dictionary<string, List<GameObject>>();
 
-    public void Initialize()
+    void Awake()
     {
-        for (int i = 0; i < poolSize; i++)
-        {
-            GameObject enemy = Instantiate(enemyPrefab);
-            enemy.SetActive(false);
-            pool.Add(enemy);
-        }
+        if (Instance == null) Instance = this;
     }
 
-    public GameObject GetEnemy()
+    public GameObject GetEnemy(GameObject prefab)
     {
-        foreach (GameObject enemy in pool)
+        string key = prefab.name;
+
+        if (!pools.ContainsKey(key))
+        {
+            pools.Add(key, new List<GameObject>());
+        }
+
+        foreach (GameObject enemy in pools[key])
         {
             if (!enemy.activeInHierarchy)
             {
@@ -29,9 +30,8 @@ public class EnemyPool : MonoBehaviour
             }
         }
 
-        // Se acabar, cria mais (opcional)
-        GameObject newEnemy = Instantiate(enemyPrefab);
-        pool.Add(newEnemy);
+        GameObject newEnemy = Instantiate(prefab);
+        pools[key].Add(newEnemy);
         return newEnemy;
     }
 }

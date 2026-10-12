@@ -11,23 +11,40 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Configurações de Spawn")]
     public EnemyType[] enemies;
+    public EnemyType[] eliteEnemies;
+    private int spawnCount = 0; // Contador de inimigos spawnados
     public float initialSpawnRate = 2f;    // Velocidade inicial
-    public float minSpawnRate = 0.5f;      // Velocidade máxima permitida
+    public float minSpawnRate = 1f;        // Velocidade máxima permitida
     public float spawnDecay = 0.05f;       // Quanto diminui a cada novo inimigo
+
+    [Header("Mecânica de Spawn Duplo")]
+    [Range(0f, 1f)]
+    [Tooltip("Chance (de 0 a 1) de spawnar 2 inimigos ao mesmo tempo")]
+    public float doubleSpawnChance = 0.15f; // 15% de chance padrão
+
+    [Header("Controle de Dificuldade (Tempo)")]
+    [Tooltip("Tempo em segundos para os inimigos passarem para o Nível 2 (Médio)")]
+    public float tempoNivelMedio = 20f;
+
+    [Tooltip("Tempo em segundos para os inimigos passarem para o Nível 3 (Difícil)")]
+    public float tempoNivelDificil = 40f;
 
     private float currentSpawnRate;
     private float spawnTimer = 0f;
     private float difficultyTimer = 0f;
     private Camera mainCam;
 
+    private ExplosionSpawner explosionSpawner;
+
     void Start()
     {
         mainCam = Camera.main;
         currentSpawnRate = initialSpawnRate;
 
-        // Regra: Não esperar o valor inicial para o primeiro inimigo
-        // Forçamos o timer a ser igual ao rate para disparar no primeiro frame do Update
+        // Dispara o primeiro spawn no primeiro frame
         spawnTimer = currentSpawnRate;
+
+        explosionSpawner = gameObject.GetComponent<ExplosionSpawner>();
     }
 
     void Update()
@@ -41,7 +58,7 @@ public class EnemySpawner : MonoBehaviour
         {
             SpawnEnemy();
 
-            // Reduz o tempo de espera para o próximo inimigo
+            // Reduz o tempo de espera para o próximo ciclo de spawn
             AccelerateSpawn();
 
             spawnTimer = 0f;
@@ -50,12 +67,10 @@ public class EnemySpawner : MonoBehaviour
 
     void AccelerateSpawn()
     {
-        // Diminui o tempo atual, mas garante que não ultrapasse o mínimo
         if (currentSpawnRate > minSpawnRate)
         {
             currentSpawnRate -= spawnDecay;
 
-            // Trava no valor mínimo para não ficar negativo ou impossível
             if (currentSpawnRate < minSpawnRate)
             {
                 currentSpawnRate = minSpawnRate;
@@ -67,27 +82,72 @@ public class EnemySpawner : MonoBehaviour
     {
         if (EnemyPool.Instance == null) return;
 
-        int randomIndex = Random.Range(0, enemies.Length);
-        GameObject selectedPrefab = enemies[randomIndex].prefab;
+        // 1. Determina quantos inimigos vão spawnar nesta leva
+        int quantidadeParaSpawnar = (Random.value < doubleSpawnChance) ? 2 : 1;
+
+        // 2. Executa o spawn a quantidade de vezes sorteada
+        for (int i = 0; i < quantidadeParaSpawnar; i++)
+        {
+            InstantiateSingleEnemy();
+        }
+    }
+
+    private void InstantiateSingleEnemy()
+    {
+        GameObject selectedPrefab = null;
+
+        spawnCount++;
+
+        // A cada 5 inimigos spawnados (ou a sua regra original), gera um elite se houver
+        if (spawnCount % 5 == 0 && eliteEnemies.Length > 0)
+        {
+            int randomEliteIndex = Random.Range(0, eliteEnemies.Length);
+            selectedPrefab = eliteEnemies[randomEliteIndex].prefab;
+        }
+        else
+        {
+            int randomIndex = Random.Range(0, enemies.Length);
+            selectedPrefab = enemies[randomIndex].prefab;
+        }
 
         GameObject enemyObj = EnemyPool.Instance.GetEnemy(selectedPrefab);
+
+        enemyObj.GetComponent<EnemyBasics>().ResetEnemy(); // Resetando o inimigo antes de spawnar
 
         // Posicionamento na tela
         float minX = mainCam.ViewportToWorldPoint(new Vector3(0.1f, 0, 0)).x;
         float maxX = mainCam.ViewportToWorldPoint(new Vector3(0.9f, 0, 0)).x;
         enemyObj.transform.position = new Vector2(Random.Range(minX, maxX), 6f);
 
-        // Define o nível baseado no tempo (20s = médio, 40s = difícil)
+        // Define o nível baseado nos tempos configuráveis do Inspector
         int level = 1;
-        if (difficultyTimer > 20f) level = 2;
-        if (difficultyTimer > 40f) level = 3;
-
-        var settings = enemyObj.GetComponent<EnemyDifficultySettings>();
-        var shooter = enemyObj.GetComponentInChildren<BulletSpawner>();
-
-        if (settings != null && shooter != null)
+        if (difficultyTimer > tempoNivelDificil)
         {
-            shooter.ApplyPattern(settings.GetPattern(level));
+            level = 3;
         }
+        else if (difficultyTimer > tempoNivelMedio)
+        {
+            level = 2;
+        }
+
+        // Aplicação dos padrões de dificuldade
+        EnemyDifficultySettings[] allSettings = enemyObj.GetComponentsInChildren<EnemyDifficultySettings>();
+
+        foreach (var settings in allSettings)
+        {
+            var shooter = settings.GetComponent<BulletSpawner>();
+
+            if (shooter == null)
+            {
+                shooter = settings.GetComponentInChildren<BulletSpawner>();
+            }
+
+            if (shooter != null)
+            {
+                shooter.ApplyPattern(settings.GetPattern(level));
+            }
+        }
+
+        enemyObj.GetComponent<EnemyBasics>().OnDeathExplosion = explosionSpawner.Explodir;
     }
 }

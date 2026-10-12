@@ -15,7 +15,7 @@ public class EnemyMovement : MonoBehaviour
     void FixedUpdate()
     {
         Vector2 dir = movementPattern.GetDirection();
-        rb.linearVelocity = dir * speed;
+        rb.linearVelocity = dir * speed * GetComponent<EnemyBasics>().speedScale;
 
         if (transform.position.y < -6f)
         {

@@ -106,8 +106,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ef2647365e5e8346a78d3523bcab184, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BulletMovement
-  speed: 5
+  speed: 15
   TimeToDeath: 3
+  giantBulletScale: 1.5
+  damage: 0
 --- !u!58 &7259141900768816498
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -143,7 +145,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0.15, y: 0}
-  m_Radius: 0.2
+  m_Radius: 0.35
 --- !u!50 &-3818054168334739483
 Rigidbody2D:
   serializedVersion: 5

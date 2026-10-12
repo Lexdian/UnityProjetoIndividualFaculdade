@@ -10,6 +10,7 @@ public class ShootingPattern
     public float fireRate = 0.2f;
     public float rotationSpeed = 30f;
     public float bulletSpeed = 5f;
+    public float angleStep = 0;
     public float angleSpread = 0f;
     public float speedIncrement = 0f;
 
@@ -23,6 +24,7 @@ public class EnemyDifficultySettings : MonoBehaviour
     public ShootingPattern facil;
     public ShootingPattern medio;
     public ShootingPattern dificil;
+    public ShootingPattern mutante;
 
     public ShootingPattern GetPattern(int level)
     {

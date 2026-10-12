@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 813809396609372034}
   - component: {fileID: 1887939985196493350}
   - component: {fileID: 7336145238656798503}
-  - component: {fileID: 9050092510870287975}
   m_Layer: 0
   m_Name: Batedor
   m_TagString: Untagged
@@ -34,7 +33,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.5, y: 3.975, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 248446517854195193}
@@ -134,7 +133,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Size: {x: 2, y: 3}
+  m_Size: {x: 2.5, y: 3}
   m_Direction: 0
 --- !u!114 &1100158597221547090
 MonoBehaviour:
@@ -150,6 +149,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBasics
   maxHealth: 3
   coletavel: {fileID: 6878971101872763187, guid: 4f002eae46649044d890e442551f08ed, type: 3}
+  coletavelElite: {fileID: 0}
+  speedScale: 1
+  fireRateScale: 1
+  isElite: 0
   somExplosao: {fileID: 8300000, guid: 75aa894192c30634d991064fa5eaa3fc, type: 3}
   volumeExplosao: 0.7
 --- !u!50 &4457895740609910011
@@ -191,7 +194,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcfd3295885fe1043909e98e7ee7856f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
-  speed: 2
+  speed: 1
   movementPattern: {fileID: 11400000, guid: 245621dc6690a834c897b4e3f012ed14, type: 2}
 --- !u!114 &1887939985196493350
 MonoBehaviour:
@@ -227,9 +230,10 @@ MonoBehaviour:
     aimAtPlayer: 1
     directions: 1
     burst: 1
-    fireRate: 1
+    fireRate: 0.75
     rotationSpeed: 0
-    bulletSpeed: 5
+    bulletSpeed: 4
+    angleStep: 0
     angleSpread: 0
     speedIncrement: 0.5
     shotsPerVolley: 0
@@ -238,9 +242,10 @@ MonoBehaviour:
     aimAtPlayer: 1
     directions: 1
     burst: 3
-    fireRate: 0.75
+    fireRate: 1
     rotationSpeed: 0
-    bulletSpeed: 5
+    bulletSpeed: 4
+    angleStep: 0
     angleSpread: 0
     speedIncrement: 0.5
     shotsPerVolley: 0
@@ -249,35 +254,26 @@ MonoBehaviour:
     aimAtPlayer: 1
     directions: 1
     burst: 5
-    fireRate: 0.5
+    fireRate: 1.25
     rotationSpeed: 0
-    bulletSpeed: 5
+    bulletSpeed: 4
+    angleStep: 0
     angleSpread: 0
     speedIncrement: 0.5
     shotsPerVolley: 0
     timeBetweenVolleys: 0
---- !u!95 &9050092510870287975
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 117855357397829625}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 1d61427c271b0364a9cfe4f77aad25ff, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
+  mutante:
+    aimAtPlayer: 1
+    directions: 1
+    burst: 1
+    fireRate: 0.2
+    rotationSpeed: 30
+    bulletSpeed: 5
+    angleStep: 0
+    angleSpread: 0
+    speedIncrement: 0
+    shotsPerVolley: 5
+    timeBetweenVolleys: 2
 --- !u!1 &5715020804122583098
 GameObject:
   m_ObjectHideFlags: 0

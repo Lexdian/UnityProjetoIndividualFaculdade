@@ -129,10 +129,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3deaf2f4a9dce0a48b4d063c1e3dfe64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Collectible
-  fallSpeed: 3
+  fallSpeed: 1
   scoreValue: 100
   somColeta: {fileID: 8300000, guid: 0930f58062c63ce4996afd96986ae30d, type: 3}
   volumeColeta: 0.3
+  podeSerAtraido: 1
 --- !u!61 &7309093179743052629
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -177,7 +178,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.125, y: 2}
+  m_Size: {x: 3, y: 3}
   m_EdgeRadius: 0
 --- !u!50 &522911380125863277
 Rigidbody2D:

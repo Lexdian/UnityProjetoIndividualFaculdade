@@ -6,6 +6,10 @@ TagManager:
   tags:
   - Bullet
   - EnemyBullet
+  - ContainerCima
+  - ContainerBaixo
+  - CanvasParent
+  - GameUIManager
   layers:
   - Default
   - TransparentFX
@@ -18,7 +22,7 @@ TagManager:
   - 
   - Graze
   - Fundo
-  - 
+  - Wave
   - 
   - 
   - 
@@ -42,6 +46,9 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: CameraSortingLayer
+    uniqueID: 627872185
     locked: 0
   m_RenderingLayers:
   - Default

@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using DG.Tweening; // <--- Importante adicionar para usar o DOTween!
+using DG.Tweening;
+using System.Globalization;
 
 public class GameUIManager : MonoBehaviour
 {
     private int HighScore = 0;
+    private readonly CultureInfo culturaPontos = new CultureInfo("pt-BR");
 
     [Header("Referências Externas")]
     [SerializeField] private PlayerMovement player;
@@ -17,10 +19,6 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private Text textoScoreMultiplier;
     [SerializeField] private Text textoVidas;
 
-    [Header("Configurações de Pause")]
-    [SerializeField] private GameObject painelPause;
-    private bool jogoPausado = false;
-
     [Header("Power-Ups")]
     [SerializeField] private Sprite imagemCimaNula;
     [SerializeField] private Sprite imagemBaixoNula;
@@ -31,39 +29,46 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private Text textoPoder;
     [SerializeField] private Text textoPods;
 
+    [Header("Efeitos de Partículas e Áudio")]
+    [SerializeField] private ParticleSystem[] particulasPowerUp;
+    [SerializeField] private AudioClip somImpactoPowerUp; // Som do impacto / faísca do Power-Up
+    [Range(0f, 1f)][SerializeField] private float volumeImpactoPowerUp = 0.8f;
+    private AudioSource audioSource;
+
     [Header("Configurações de Animação (DOTween)")]
-    [SerializeField] private float distanciaAfastamento = 30f; // Quanto as imagens se afastam (em pixels/unidades)
+    [SerializeField] private float distanciaAfastamento = 30f;
     [SerializeField] private float duracaoSeparacao = 0.2f;
     [SerializeField] private float duracaoEncontro = 0.15f;
     [SerializeField] private float duracaoBrilho = 0.25f;
 
-    private bool processandoAnimacaoPowerUp = false; // Evita disparar a animação múltiplas vezes em loop
+    private bool processandoAnimacaoPowerUp = false;
     private Vector3 posicaoOriginalCima;
     private Vector3 posicaoOriginalBaixo;
 
     private void Start()
     {
-        HighScore = GameManager.Instance.HighScore;
-        if (textoHighScore != null) textoHighScore.text = HighScore.ToString("F0");
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        audioSource.playOnAwake = false;
 
-        // Salva as posições originais das imagens de UI para resetar após as animações
+        HighScore = GameManager.Instance.HighScore;
+        if (textoHighScore != null) textoHighScore.text = FormatarPontos(HighScore);
+
         if (imagemCimaUI != null) posicaoOriginalCima = imagemCimaUI.transform.localPosition;
         if (imagemBaixoUI != null) posicaoOriginalBaixo = imagemBaixoUI.transform.localPosition;
     }
 
     void Update()
     {
-        // 1. Controle de Pause
-        if (Keyboard.current.pKey.wasPressedThisFrame)
-        {
-            if (jogoPausado)
-                RetomarJogo();
-            else
-                PausarJogo();
-        }
-
-        // 2. Atualização Constante da Interface
         AtualizarInterface();
+    }
+
+    private string FormatarPontos(int valor)
+    {
+        return valor.ToString("#,##0", culturaPontos);
     }
 
     private void AtualizarInterface()
@@ -76,10 +81,19 @@ public class GameUIManager : MonoBehaviour
             caugeEspecial.color = Color.Lerp(Color.white, Color.red, player.especialAtual / player.especialMaximo);
         }
 
-        if (textoHighScore != null && HighScore < player.score)
+        // Atualiza a pontuação atual formatada com pontos
+        if (textoScore != null)
         {
-            textoHighScore.text = player.score.ToString("F0");
+            textoScore.text = FormatarPontos(player.score);
         }
+
+        // Atualiza o HighScore se a pontuação atual superá-lo
+        int highScoreExibicao = Mathf.Max(HighScore, player.score);
+        if (textoHighScore != null)
+        {
+            textoHighScore.text = FormatarPontos(highScoreExibicao);
+        }
+
         if (textoScoreMultiplier != null)
         {
             textoScoreMultiplier.text = "x" + player.scoreMultiplier.ToString();
@@ -91,27 +105,12 @@ public class GameUIManager : MonoBehaviour
 
         AtualizarPowerUps();
 
-        textoPoder.text = player.tiros+"/5";
-        textoPods.text = player.listaModulos.Count+"/3";
-    }
-
-    public void PausarJogo()
-    {
-        jogoPausado = true;
-        painelPause.SetActive(true);
-        Time.timeScale = 0f;
-    }
-
-    public void RetomarJogo()
-    {
-        jogoPausado = false;
-        painelPause.SetActive(false);
-        Time.timeScale = 1f;
+        if (textoPoder != null) textoPoder.text = player.tiros + "/5";
+        if (textoPods != null) textoPods.text = player.listaModulos.Count + "/3";
     }
 
     private void AtualizarPowerUps()
     {
-        // Se já tiver uma animação rodando, não reexecuta
         if (processandoAnimacaoPowerUp) return;
 
         if (cima >= 0 && baixo >= 0)
@@ -127,7 +126,7 @@ public class GameUIManager : MonoBehaviour
                     }
                     else
                     {
-                        player.GanharPontos(1000); // Se já tiver o máximo de tiros, dá pontos extras
+                        player.GanharPontos(1000);
                     }
                     Debug.Log("Efeito ativado: ESPADA");
                 });
@@ -137,13 +136,13 @@ public class GameUIManager : MonoBehaviour
             {
                 ExecutarAnimacaoCombinacaoPowerUp(() =>
                 {
-                    if(player.listaModulos.Count < 3)
+                    if (player.listaModulos.Count < 3)
                     {
                         player.AdicionarModulo();
                     }
                     else
                     {
-                        player.GanharPontos(1000); // Se já tiver o máximo de módulos, dá pontos extras
+                        player.GanharPontos(1000);
                     }
                     Debug.Log("Efeito ativado: NAVE");
                 });
@@ -164,7 +163,6 @@ public class GameUIManager : MonoBehaviour
                 {
                     if (player.temEscudo)
                     {
-                        // Se o jogador já tiver escudo, dá pontos extras
                         player.GanharPontos(1000);
                     }
                     else
@@ -177,12 +175,10 @@ public class GameUIManager : MonoBehaviour
         }
     }
 
-    // Recebe uma ação (System.Action) com o efeito que deve ser executado ao final
     private void ExecutarAnimacaoCombinacaoPowerUp(System.Action aoConcluirEfeito)
     {
         processandoAnimacaoPowerUp = true;
 
-        // Limpa animações anteriores nos elementos de UI
         imagemCimaUI.transform.DOKill();
         imagemBaixoUI.transform.DOKill();
         imagemCimaUI.DOKill();
@@ -198,7 +194,10 @@ public class GameUIManager : MonoBehaviour
         sequenciaPowerUp.Append(imagemCimaUI.transform.DOLocalMoveY(posicaoOriginalCima.y, duracaoEncontro).SetEase(Ease.InQuad));
         sequenciaPowerUp.Join(imagemBaixoUI.transform.DOLocalMoveY(posicaoOriginalBaixo.y, duracaoEncontro).SetEase(Ease.InQuad));
 
-        // 3. BRILHO DE IMPACTO
+        // 3. DISPARA AS PARTÍCULAS E O SOM NO MOMENTO DO IMPACTO
+        sequenciaPowerUp.AppendCallback(DispararParticulasPowerUp);
+
+        // 4. BRILHO DE IMPACTO
         Color corOriginalCima = imagemCimaUI.color;
         Color corOriginalBaixo = imagemBaixoUI.color;
 
@@ -208,30 +207,45 @@ public class GameUIManager : MonoBehaviour
         sequenciaPowerUp.Append(imagemCimaUI.DOColor(corOriginalCima, duracaoBrilho * 0.5f));
         sequenciaPowerUp.Join(imagemBaixoUI.DOColor(corOriginalBaixo, duracaoBrilho * 0.5f));
 
-        // 4. CONCLUSÃO DA ANIMAÇÃO
+        // 5. CONCLUSÃO DA ANIMAÇÃO
         sequenciaPowerUp.OnComplete(() =>
         {
-            // Reseta posições
             imagemCimaUI.transform.localPosition = posicaoOriginalCima;
             imagemBaixoUI.transform.localPosition = posicaoOriginalBaixo;
 
-            //Reseta escala
             imagemCimaUI.transform.localScale = Vector3.one;
             imagemBaixoUI.transform.localScale = Vector3.one;
 
-            // Limpa os sprites da UI
             imagemCimaUI.sprite = imagemCimaNula;
             imagemBaixoUI.sprite = imagemBaixoNula;
 
-            // Reseta as variáveis de controle
             cima = -1;
             baixo = -1;
 
-            // EXECUTA O EFEITO ESPECÍFICO PASSADO
+            PartePoder.AtualizarTodasPartesNaTela();
+
             aoConcluirEfeito?.Invoke();
 
-            // Libera para novas animações
             processandoAnimacaoPowerUp = false;
         });
+    }
+
+    private void DispararParticulasPowerUp()
+    {
+        // Toca o som no instante exato do choque/faíscas
+        if (somImpactoPowerUp != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(somImpactoPowerUp, volumeImpactoPowerUp);
+        }
+
+        if (particulasPowerUp == null) return;
+
+        foreach (var ps in particulasPowerUp)
+        {
+            if (ps != null)
+            {
+                ps.Play();
+            }
+        }
     }
 }

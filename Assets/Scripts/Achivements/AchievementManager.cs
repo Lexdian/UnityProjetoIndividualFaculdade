@@ -9,7 +9,6 @@ using Unity.Services.Authentication;
 using Unity.Services.CloudSave;
 using DeleteOptions = Unity.Services.CloudSave.Models.Data.Player.DeleteOptions;
 
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -110,7 +109,7 @@ public class AchievementManager : MonoBehaviour
             },
 
             // ==========================================
-            // ENEMY KILL ACHIEVEMENTS (PROGRESSIVE)
+            // ENEMY KILL ACHIEVEMENTS (INDIVIDUALS)
             // ==========================================
             new Achievement
             {
@@ -202,6 +201,78 @@ public class AchievementManager : MonoBehaviour
             },
 
             // ==========================================
+            // DUAL COMBINATION ACHIEVEMENTS
+            // ==========================================
+            new Achievement
+            {
+                id = "giant_accelerated_enemy_kill",
+                title = "Fast & Furious Colossus",
+                description = "Destroy 3 Giant Accelerated enemies.",
+                isProgressive = true,
+                targetAmount = 3
+            },
+            new Achievement
+            {
+                id = "giant_accelerated_elite_enemy_kill",
+                title = "Hyper Titan Hunter",
+                description = "Eliminate 2 Giant Accelerated Elite enemies.",
+                isProgressive = true,
+                targetAmount = 2
+            },
+            new Achievement
+            {
+                id = "giant_mutant_enemy_kill",
+                title = "Toxic Heavyweight",
+                description = "Destroy 3 Giant Mutant enemies.",
+                isProgressive = true,
+                targetAmount = 3
+            },
+            new Achievement
+            {
+                id = "giant_mutant_elite_enemy_kill",
+                title = "Bio-Colossus Extinction",
+                description = "Eliminate 2 Giant Mutant Elite enemies.",
+                isProgressive = true,
+                targetAmount = 2
+            },
+            new Achievement
+            {
+                id = "accelerated_mutant_enemy_kill",
+                title = "Radioactive Streak",
+                description = "Destroy 5 Accelerated Mutant enemies.",
+                isProgressive = true,
+                targetAmount = 5
+            },
+            new Achievement
+            {
+                id = "accelerated_mutant_elite_enemy_kill",
+                title = "Furious Contagion",
+                description = "Eliminate 3 Accelerated Mutant Elite enemies.",
+                isProgressive = true,
+                targetAmount = 3
+            },
+
+            // ==========================================
+            // TRIPLE COMBINATION ACHIEVEMENTS
+            // ==========================================
+            new Achievement
+            {
+                id = "triple_threat_enemy_kill",
+                title = "Unstoppable Anomaly",
+                description = "Destroy a Giant Accelerated Mutant enemy.",
+                isProgressive = true,
+                targetAmount = 1
+            },
+            new Achievement
+            {
+                id = "triple_threat_elite_enemy_kill",
+                title = "Giga Overlord Slayer",
+                description = "Eliminate a Giant Accelerated Mutant Elite enemy.",
+                isProgressive = true,
+                targetAmount = 1
+            },
+
+            // ==========================================
             // CUMULATIVE & LIFE ACHIEVEMENTS
             // ==========================================
             new Achievement
@@ -219,18 +290,10 @@ public class AchievementManager : MonoBehaviour
                 description = "Destroy a total of 5,000 enemies.",
                 isProgressive = true,
                 targetAmount = 5000
-            },
-            new Achievement
-            {
-                id = "first_death",
-                title = "Space Dust",
-                description = "Meet your demise for the first time.",
-                isProgressive = false
             }
         };
     }
 
-    // Gera uma chave válida para o Cloud Save com base no TÍTULO da conquista
     private string GetSanitizedKey(string title, string suffix)
     {
         string cleanTitle = Regex.Replace(title, @"[^a-zA-Z0-9_]", "_").ToLower();

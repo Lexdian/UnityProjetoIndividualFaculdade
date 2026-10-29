@@ -2,5 +2,5 @@ using UnityEngine;
 
 public abstract class AbstractEnemyMovement : ScriptableObject
 {
-    public abstract Vector2 GetDirection();
+    public abstract Vector2 GetDirection(Transform transform, float timeAlive);
 }

@@ -6,22 +6,35 @@ public class BulletMovement : MonoBehaviour
     public float TimeToDeath = 3f;
 
     private Vector2 direction;
-    private Rigidbody2D rb;
+    protected Rigidbody2D rb;
     private float timer;
 
     private BulletPool pool;
 
     private Vector3 initialScale;
     [Tooltip("Fator aplicado às balas quando atiradas por inimigos gigantes")]
-    public float giantBulletScale = 1.5f;
+    public float giantBulletScale = 2.2f;
     private bool isGiantBullet = false;
+
+    // Propriedade pública para consultar se esta bala é gigante
+    public bool IsGiant => isGiantBullet;
+
+    private float speedMultiplier = 1f;
 
     public float damage;
 
-    void Awake()
+    protected virtual void Awake()
     {
         initialScale = transform.localScale;
-        rb = GetComponent<Rigidbody2D>();
+        GarantirRigidbody();
+    }
+
+    private void GarantirRigidbody()
+    {
+        if (rb == null)
+        {
+            rb = GetComponent<Rigidbody2D>();
+        }
     }
 
     public void SetDirection(Vector2 dir, float spd)
@@ -46,7 +59,6 @@ public class BulletMovement : MonoBehaviour
         pool = p;
     }
 
-    // Configura se a bala é gigante e aplica a escala visual
     public void SetGiant(bool giant)
     {
         isGiantBullet = giant;
@@ -60,27 +72,41 @@ public class BulletMovement : MonoBehaviour
         }
     }
 
-    void OnEnable()
+    public void SetSpeedMultiplier(float mult)
+    {
+        speedMultiplier = mult;
+    }
+
+    protected virtual void OnEnable()
     {
         timer = 0f;
+        speedMultiplier = 1f;
         SetGiant(false);
+        GarantirRigidbody();
     }
 
     void FixedUpdate()
     {
-        // Se for gigante, reduz a velocidade em 25% (multiplica por 0.75)
         float multiplicadorVelocidadeTamanho = isGiantBullet ? 0.75f : 1f;
-
-        // Anula a câmera lenta para balas do jogador
         float multiplicadorVelocidadeTempo = this.gameObject.CompareTag("EnemyBullet") ? 1f : 1f / Time.timeScale;
 
-        rb.linearVelocity = direction * speed * multiplicadorVelocidadeTamanho * multiplicadorVelocidadeTempo;
+        Move(multiplicadorVelocidadeTamanho, multiplicadorVelocidadeTempo);
 
         timer += Time.fixedDeltaTime;
 
-        if (timer >= TimeToDeath)
+        if (timer >= TimeToDeath && pool != null)
         {
             pool.ReturnBullet(gameObject);
+        }
+    }
+
+    protected virtual void Move(float multTam, float multTemp)
+    {
+        GarantirRigidbody();
+
+        if (rb != null)
+        {
+            rb.linearVelocity = direction * speed * speedMultiplier * multTam * multTemp;
         }
     }
 }

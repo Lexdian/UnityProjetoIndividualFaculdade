@@ -5,7 +5,7 @@ public class EnemyStraigthMovement : AbstractEnemyMovement
 {
     public Vector2 direction = Vector2.down;
 
-    public override Vector2 GetDirection()
+    public override Vector2 GetDirection(Transform transform, float timeAlive)
     {
         return direction.normalized;
     }

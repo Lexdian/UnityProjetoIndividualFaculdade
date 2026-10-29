@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GhostEffect : MonoBehaviour
@@ -29,10 +30,36 @@ public class GhostEffect : MonoBehaviour
     private Rigidbody2D rb2d;
     private float ghostTimer;
 
+    // Lista de rastreio para destruição em massa
+    private List<GameObject> activeGhosts = new List<GameObject>();
+
     private void Awake()
     {
         sourceSR = GetComponentInChildren<SpriteRenderer>();
         rb2d = GetComponent<Rigidbody2D>();
+    }
+
+    private void OnDisable()
+    {
+        ClearAllGhosts();
+    }
+
+    public void ClearAllGhosts()
+    {
+        // Interrompe o fade de todas as corrotinas ativas
+        StopAllCoroutines();
+
+        // Apaga imediatamente todos os fantasmas ainda existentes no mundo
+        for (int i = activeGhosts.Count - 1; i >= 0; i--)
+        {
+            if (activeGhosts[i] != null)
+            {
+                Destroy(activeGhosts[i]);
+            }
+        }
+
+        activeGhosts.Clear();
+        ghostTimer = 0f;
     }
 
     private void Update()
@@ -70,14 +97,15 @@ public class GhostEffect : MonoBehaviour
         ghostSR.flipX = sourceSR.flipX;
         ghostSR.flipY = sourceSR.flipY;
         ghostSR.sortingLayerID = sourceSR.sortingLayerID;
-        ghostSR.sortingOrder = sourceSR.sortingOrder - 1; // Renderiza logo atrás do player
+        ghostSR.sortingOrder = sourceSR.sortingOrder - 1; // Renderiza logo atrás
 
         if (ghostMaterial != null)
         {
             ghostSR.material = ghostMaterial;
         }
 
-        // 3. Inicia o Fade Out e destruição
+        // 3. Adiciona o fantasma à lista de rastreio e inicia a corrotina
+        activeGhosts.Add(ghostObj);
         StartCoroutine(FadeAndDestroyGhost(ghostObj, ghostSR));
     }
 
@@ -91,7 +119,6 @@ public class GhostEffect : MonoBehaviour
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / ghostLifetime;
 
-            // Suaviza o canal Alpha (transparência) até 0
             Color currentColor = initialColor;
             currentColor.a = Mathf.Lerp(initialColor.a, 0f, t);
 
@@ -103,10 +130,20 @@ public class GhostEffect : MonoBehaviour
             yield return null;
         }
 
-        Destroy(ghostObj);
+        // Remove da lista de controle antes de destruir
+        if (ghostObj != null)
+        {
+            activeGhosts.Remove(ghostObj);
+            Destroy(ghostObj);
+        }
     }
 
-    // Métodos públicos para ativar por gatilhos externos (ex: habilidades/dash/tempo lento)
+    // Métodos públicos para ativar por gatilhos externos
     public void EnableGhost() => isGhostActive = true;
-    public void DisableGhost() => isGhostActive = false;
+
+    public void DisableGhost()
+    {
+        isGhostActive = false;
+        ClearAllGhosts();
+    }
 }

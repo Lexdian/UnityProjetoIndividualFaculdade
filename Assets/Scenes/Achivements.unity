@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 27771222}
   - component: {fileID: 27771221}
   - component: {fileID: 27771220}
+  - component: {fileID: 27771223}
   m_Layer: 5
   m_Name: Return
   m_TagString: Untagged
@@ -251,6 +252,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 27771218}
   m_CullTransparentMesh: 1
+--- !u!114 &27771223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 27771218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: 0309b904a81011d43b64e48217c05a8c, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!1 &170721878
 GameObject:
   m_ObjectHideFlags: 0
@@ -358,8 +375,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 506cc06249a38ed4f8067108499fdb1f, type: 2}
+  m_sharedMaterial: {fileID: -262028427497307194, guid: 506cc06249a38ed4f8067108499fdb1f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

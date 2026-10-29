@@ -2,9 +2,18 @@ using UnityEngine;
 
 public class Collectible : MonoBehaviour
 {
-    [Header("Configurações")]
+    [Header("Configurações de Queda")]
     public float fallSpeed = 3f;
     public int scoreValue = 100;
+
+    [Header("Efeito de Salto Inicial (Pop-Up)")]
+    [Tooltip("Força do pulo inicial para cima ao spawnar")]
+    public float initialJumpForce = 4.5f;
+
+    [Tooltip("Gravidade aplicada para desacelerar o pulo e iniciar a queda")]
+    public float gravity = 12f;
+
+    private float currentVerticalSpeed;
 
     [Header("Áudio")]
     public AudioClip somColeta;
@@ -26,11 +35,15 @@ public class Collectible : MonoBehaviour
 
     protected virtual void OnEnable()
     {
+        // Define a velocidade inicial do pulo para suportar instanciação e Object Pooling
+        currentVerticalSpeed = initialJumpForce;
+
         if (PlayerMovement.Instance != null && podeSerAtraido)
         {
             PlayerMovement.Instance.RegistrarColetavel(this);
         }
     }
+
     protected virtual void OnDisable()
     {
         if (PlayerMovement.Instance != null && podeSerAtraido)
@@ -38,19 +51,29 @@ public class Collectible : MonoBehaviour
             PlayerMovement.Instance.DesregistrarColetavel(this);
         }
     }
+
     protected virtual void Update()
     {
-        // Se foi ativado o modo de atração, move-se em direção ao jogador
+        // Se foi ativado o modo de atração (ex: POC no topo da tela), move-se direto para o jogador
         if (atraido && alvoAtracao != null)
         {
             transform.position = Vector3.MoveTowards(transform.position, alvoAtracao.position, velocidadeAtracao * Time.deltaTime);
         }
         else
         {
-            // 1. Faz o item cair constantemente
-            transform.Translate(Vector2.down * fallSpeed * Time.deltaTime);
+            // 1. Aplica a gravidade para reduzir a velocidade de subida até começar a cair
+            currentVerticalSpeed -= gravity * Time.deltaTime;
 
-            // 2. Verifica se saiu da visão da câmera
+            // 2. Limita a velocidade máxima de queda para não ultrapassar o fallSpeed
+            if (currentVerticalSpeed < -fallSpeed)
+            {
+                currentVerticalSpeed = -fallSpeed;
+            }
+
+            // 3. Move o objeto verticalmente
+            transform.Translate(Vector2.up * currentVerticalSpeed * Time.deltaTime);
+
+            // 4. Verifica se saiu do limite inferior da tela
             VerificarLimiteInferior();
         }
     }
@@ -73,6 +96,12 @@ public class Collectible : MonoBehaviour
 
         if (viewPos.y < -0.1f)
         {
+            // --- NOTIFICA O SISTEMA DE PERÍCIA QUE O ITEM FOI PERDIDO ---
+            if (EnemySpawner.Instance != null)
+            {
+                EnemySpawner.Instance.RegistrarColetavelPerdido();
+            }
+
             Destroy(gameObject);
         }
     }
@@ -81,7 +110,6 @@ public class Collectible : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            // Toca o som de coleta
             if (somColeta != null && mainCam != null)
             {
                 AudioSource.PlayClipAtPoint(somColeta, mainCam.transform.position, volumeColeta);

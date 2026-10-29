@@ -80,9 +80,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingLayerID: 627872185
+  m_SortingLayer: 1
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: -5427202000976442744, guid: 1bffbb5422fad3e46b630a6fc5629aa1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -108,6 +108,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BulletMovement
   speed: 0.1
   TimeToDeath: 30
+  giantBulletScale: 1.5
+  damage: 0
 --- !u!58 &7259141900768816498
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -142,8 +144,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.15, y: 0}
-  m_Radius: 0.2
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.4
 --- !u!50 &-3818054168334739483
 Rigidbody2D:
   serializedVersion: 5

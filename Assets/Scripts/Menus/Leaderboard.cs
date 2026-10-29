@@ -1,13 +1,14 @@
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Services.Authentication;
 using Unity.Services.Leaderboards;
+using Unity.Services.Leaderboards.Exceptions;
 using Unity.Services.Leaderboards.Models;
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class Leaderboard : MonoBehaviour
 {
@@ -80,11 +81,10 @@ public class Leaderboard : MonoBehaviour
         {
             loadingSpinner.sprite = loadingImages[currentFrame];
 
-            // Se os dados já chegaram e estamos no último frame da animação:
             if (carregamentoConcluido && currentFrame == loadingImages.Length - 1)
             {
                 FinalizarTransicaoUI();
-                yield break; // Interrompe o loop
+                yield break;
             }
 
             currentFrame = (currentFrame + 1) % loadingImages.Length;
@@ -101,68 +101,109 @@ public class Leaderboard : MonoBehaviour
 
         try
         {
-            var scoresTask = LeaderboardsService.Instance.GetScoresAsync(
-                leaderboardId,
-                new GetScoresOptions { Limit = 100 }
-            );
-
-            var playerScoreTask = LeaderboardsService.Instance.GetPlayerScoreAsync(leaderboardId);
-
-            await Task.WhenAll(scoresTask, playerScoreTask);
-
-            var scores = scoresTask.Result;
-            var playerScoreResponse = playerScoreTask.Result;
-
-            foreach (var entry in scores.Results)
+            // 1. Garante que a pontuação local do GameManager seja enviada ao UGS antes de consultar
+            if (GameManager.Instance != null && GameManager.Instance.HighScore > 0)
             {
-                GameObject newLine = Instantiate(linePrefab, listContentContainer);
+                await UGSManager.Instance.AddScore(GameManager.Instance.HighScore);
+            }
 
-                LeaderboardEntry entryComponent = newLine.GetComponent<LeaderboardEntry>();
-                TMP_Text rankText = entryComponent.Rank;
-                TMP_Text nameText = entryComponent.Name;
-                TMP_Text scoreText = entryComponent.Score;
-                Image rankIcon = entryComponent.MedalIcon;
+            // 2. Requisita a lista global dos 100 melhores
+            LeaderboardScoresPage scores = null;
+            try
+            {
+                scores = await LeaderboardsService.Instance.GetScoresAsync(
+                    leaderboardId,
+                    new GetScoresOptions { Limit = 100 }
+                );
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Erro ao carregar lista do Leaderboard: " + e.Message);
+            }
 
-                int pos = entry.Rank + 1;
-                string suffix = pos == 1 ? "st" : pos == 2 ? "nd" : pos == 3 ? "rd" : "th";
+            // 3. Requisita a pontuação atual do jogador no servidor UGS
+            Unity.Services.Leaderboards.Models.LeaderboardEntry playerScoreResponse = null;
+            try
+            {
+                playerScoreResponse = await LeaderboardsService.Instance.GetPlayerScoreAsync(leaderboardId);
+            }
+            catch (LeaderboardsException ex)
+            {
+                Debug.Log($"Jogador ainda sem registro confirmado no servidor UGS: {ex.Message}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"Aviso ao obter score individual: {ex.Message}");
+            }
 
-                rankText.text = pos + suffix;
-                nameText.text = string.IsNullOrEmpty(entry.PlayerName)
-                    ? entry.PlayerId.Substring(0, 6)
-                    : entry.PlayerName;
-
-                scoreText.text = entry.Score.ToString("N0");
-
-                string tierId = entry.Tier ?? "";
-                Sprite medalSprite = GetMedalhaSprite(tierId);
-
-                if (medalSprite != null)
+            // 4. Monta as linhas da tabela global
+            if (scores != null && scores.Results != null)
+            {
+                foreach (var entry in scores.Results)
                 {
-                    rankIcon.sprite = medalSprite;
-                    rankIcon.enabled = true;
-                }
-                else
-                {
-                    rankIcon.enabled = false;
+                    GameObject newLine = Instantiate(linePrefab, listContentContainer);
+
+                    LeaderboardEntry entryComponent = newLine.GetComponent<LeaderboardEntry>();
+                    TMP_Text rankText = entryComponent.Rank;
+                    TMP_Text nameText = entryComponent.Name;
+                    TMP_Text scoreText = entryComponent.Score;
+                    Image rankIcon = entryComponent.MedalIcon;
+
+                    int pos = entry.Rank + 1;
+                    string suffix = pos == 1 ? "st" : pos == 2 ? "nd" : pos == 3 ? "rd" : "th";
+
+                    rankText.text = pos + suffix;
+                    nameText.text = string.IsNullOrEmpty(entry.PlayerName)
+                        ? (entry.PlayerId.Length >= 6 ? entry.PlayerId.Substring(0, 6) : entry.PlayerId)
+                        : entry.PlayerName;
+
+                    scoreText.text = entry.Score.ToString("N0");
+
+                    string tierId = entry.Tier ?? "";
+                    Sprite medalSprite = GetMedalhaSprite(tierId);
+
+                    if (medalSprite != null)
+                    {
+                        rankIcon.sprite = medalSprite;
+                        rankIcon.enabled = true;
+                    }
+                    else
+                    {
+                        rankIcon.enabled = false;
+                    }
                 }
             }
 
-            playerScore.text = playerScoreResponse.Score.ToString("N0");
-
-            Sprite playerMedal = GetMedalhaSprite(playerScoreResponse.Tier ?? "");
-            if (playerMedal != null)
+            // 5. Preenche os dados do jogador local no painel "YOUR BEST SCORE"
+            if (playerScoreResponse != null)
             {
-                PlayerRankIcon.sprite = playerMedal;
-                PlayerRankIcon.enabled = true;
+                if (playerScore != null)
+                    playerScore.text = playerScoreResponse.Score.ToString("N0");
+
+                Sprite playerMedal = GetMedalhaSprite(playerScoreResponse.Tier ?? "");
+                if (playerMedal != null && PlayerRankIcon != null)
+                {
+                    PlayerRankIcon.sprite = playerMedal;
+                    PlayerRankIcon.enabled = true;
+                }
+            }
+            else
+            {
+                // FALLBACK: Se o UGS ainda não processou o envio, exibe o HighScore do GameManager local
+                int localHighScore = GameManager.Instance != null ? GameManager.Instance.HighScore : 0;
+
+                if (playerScore != null)
+                    playerScore.text = localHighScore.ToString("N0");
+
+                if (PlayerRankIcon != null)
+                    PlayerRankIcon.enabled = false;
             }
 
-            // Sinaliza para a Coroutine que os dados estão prontos
             carregamentoConcluido = true;
         }
         catch (System.Exception e)
         {
-            Debug.LogError("Erro ao carregar Leaderboard: " + e.Message);
-            // Em caso de erro, encerra imediatamente para não travar a UI
+            Debug.LogError("Erro inesperado ao atualizar UI do Leaderboard: " + e.Message);
             carregamentoConcluido = true;
             FinalizarTransicaoUI();
         }

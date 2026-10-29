@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 4010127448472313358}
   - component: {fileID: 1323446164418749826}
   - component: {fileID: 1815308909153123059}
+  - component: {fileID: 8974757463895349035}
   m_Layer: 0
   m_Name: Cerco_Elite
   m_TagString: Untagged
@@ -112,6 +113,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
   speed: 0.5
   movementPattern: {fileID: 11400000, guid: 245621dc6690a834c897b4e3f012ed14, type: 2}
+  aceleratedMovementPattern: {fileID: 11400000, guid: 51ef22fcdfeacad4a8a9e31c376f26ea, type: 2}
 --- !u!114 &2828996179714058310
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,14 +126,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee0bd9de5b696d2448d854248300152d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBasics
-  maxHealth: 10
+  maxHealth: 15
+  currentHealth: 0
   coletavel: {fileID: 6878971101872763187, guid: 4f002eae46649044d890e442551f08ed, type: 3}
   coletavelElite: {fileID: 6878971101872763187, guid: 42d74cd22bc9b9a42a22d0dc4140b64b, type: 3}
   speedScale: 1
   fireRateScale: 1
+  bulletSpeedScale: 1
   isElite: 1
   somExplosao: {fileID: 8300000, guid: 75aa894192c30634d991064fa5eaa3fc, type: 3}
+  somImpacto: {fileID: 8300000, guid: 76056e23a290b9e4394618356475e09e, type: 3}
   volumeExplosao: 0.7
+  volumeImpacto: 1
 --- !u!114 &4428111584633356316
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,12 +150,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5ad8987cd13ab4e990e095021fe2df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BulletSpawner
-  bulletPrefab: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
-  bulletLifetime: 3
+  bulletLifetime: 15
   target: {fileID: 0}
   minYToShoot: -3
   somTiroInimigo: {fileID: 8300000, guid: 26e43d28d5890aa489dc1ada79e0a53a, type: 3}
   volumeTiro: 0.1
+  usarEscalonamentoStop: 1
+  tempoCaminhadaInicial: 0.2
+  incrementoTempoPorRajada: 0.2
+  tempoAndandoPadrao: 0.8
+  tempoParadoPadrao: 0.4
 --- !u!114 &4010127448472313358
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,6 +173,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDifficultySettings
   facil:
+    bullet: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
     aimAtPlayer: 0
     directions: 5
     burst: 1
@@ -174,7 +185,13 @@ MonoBehaviour:
     speedIncrement: 0
     shotsPerVolley: 7
     timeBetweenVolleys: 1
+    usarEscalonamentoStop: 0
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.8
+    tempoParadoPadrao: 0.4
   medio:
+    bullet: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
     aimAtPlayer: 0
     directions: 5
     burst: 1
@@ -186,7 +203,13 @@ MonoBehaviour:
     speedIncrement: 0
     shotsPerVolley: 9
     timeBetweenVolleys: 0.75
+    usarEscalonamentoStop: 0
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.8
+    tempoParadoPadrao: 0.4
   dificil:
+    bullet: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
     aimAtPlayer: 0
     directions: 5
     burst: 1
@@ -198,9 +221,15 @@ MonoBehaviour:
     speedIncrement: 0
     shotsPerVolley: 11
     timeBetweenVolleys: 0.5
+    usarEscalonamentoStop: 0
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.8
+    tempoParadoPadrao: 0.4
   mutante:
-    aimAtPlayer: 1
-    directions: 1
+    bullet: {fileID: 16094397416525084, guid: abf2167c59b4622489c5c51198069191, type: 3}
+    aimAtPlayer: 0
+    directions: 20
     burst: 1
     fireRate: 0.2
     rotationSpeed: 30
@@ -208,8 +237,13 @@ MonoBehaviour:
     angleStep: 0
     angleSpread: 0
     speedIncrement: 0
-    shotsPerVolley: 5
+    shotsPerVolley: 3
     timeBetweenVolleys: 2
+    usarEscalonamentoStop: 1
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.6
+    tempoParadoPadrao: 1
 --- !u!58 &1323446164418749826
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -240,7 +274,7 @@ CircleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -273,6 +307,25 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &8974757463895349035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4132480044771878813}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1aa3cab3ea0d7c48a511b2f4eb62891, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GhostEffect
+  isGhostActive: 0
+  ghostInterval: 0.05
+  ghostLifetime: 0.3
+  ghostColor: {r: 0.5, g: 0.8, b: 1, a: 0.6}
+  ghostMaterial: {fileID: 0}
+  onlyWhenMoving: 1
+  minVelocityToSpawn: 0.1
 --- !u!1 &4477433351308329078
 GameObject:
   m_ObjectHideFlags: 0
@@ -319,53 +372,77 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDifficultySettings
   facil:
+    bullet: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
     aimAtPlayer: 0
     directions: 5
     burst: 1
     fireRate: 0.2
     rotationSpeed: -60
-    bulletSpeed: 3
+    bulletSpeed: 2
     angleStep: 0
     angleSpread: 0
     speedIncrement: 0
     shotsPerVolley: 7
     timeBetweenVolleys: 1
+    usarEscalonamentoStop: 0
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.8
+    tempoParadoPadrao: 0.4
   medio:
+    bullet: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
     aimAtPlayer: 0
     directions: 5
     burst: 1
     fireRate: 0.15
     rotationSpeed: -60
-    bulletSpeed: 3
+    bulletSpeed: 2
     angleStep: 0
     angleSpread: 0
     speedIncrement: 0
     shotsPerVolley: 9
     timeBetweenVolleys: 0.75
+    usarEscalonamentoStop: 0
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.8
+    tempoParadoPadrao: 0.4
   dificil:
+    bullet: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
     aimAtPlayer: 0
     directions: 5
     burst: 1
     fireRate: 0.1
     rotationSpeed: -60
-    bulletSpeed: 3
+    bulletSpeed: 2
     angleStep: 0
     angleSpread: 0
     speedIncrement: 0
     shotsPerVolley: 11
     timeBetweenVolleys: 0.5
+    usarEscalonamentoStop: 0
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.8
+    tempoParadoPadrao: 0.4
   mutante:
-    aimAtPlayer: 1
-    directions: 1
+    bullet: {fileID: 16094397416525084, guid: abf2167c59b4622489c5c51198069191, type: 3}
+    aimAtPlayer: 0
+    directions: 20
     burst: 1
     fireRate: 0.2
-    rotationSpeed: 30
+    rotationSpeed: -60
     bulletSpeed: 5
     angleStep: 0
     angleSpread: 0
     speedIncrement: 0
-    shotsPerVolley: 5
+    shotsPerVolley: 3
     timeBetweenVolleys: 2
+    usarEscalonamentoStop: 1
+    tempoCaminhadaInicial: 0.2
+    incrementoTempoPorRajada: 0.2
+    tempoAndandoPadrao: 0.6
+    tempoParadoPadrao: 1
 --- !u!114 &9208489228385968772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -378,9 +455,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5ad8987cd13ab4e990e095021fe2df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BulletSpawner
-  bulletPrefab: {fileID: 16094397416525084, guid: 9f3f5bfb95086914eb6c60644394d8a9, type: 3}
-  bulletLifetime: 3
+  bulletLifetime: 15
   target: {fileID: 0}
   minYToShoot: -3
   somTiroInimigo: {fileID: 0}
   volumeTiro: 0.1
+  usarEscalonamentoStop: 1
+  tempoCaminhadaInicial: 0.2
+  incrementoTempoPorRajada: 0.2
+  tempoAndandoPadrao: 0.8
+  tempoParadoPadrao: 0.4

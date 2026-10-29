@@ -4,7 +4,8 @@ using System;
 [Serializable]
 public class ShootingPattern
 {
-    public bool aimAtPlayer = true; // Opcional: Atirar na direção do jogador ou não
+    public GameObject bullet;
+    public bool aimAtPlayer = true;
     public int directions = 1;
     public int burst = 1;
     public float fireRate = 0.2f;
@@ -17,6 +18,13 @@ public class ShootingPattern
     [Header("Configuração de Salva (Volley)")]
     public int shotsPerVolley = 5;
     public float timeBetweenVolleys = 2f;
+
+    [Header("Padrão Stop (Parada Escalonada)")]
+    public bool usarEscalonamentoStop = false;
+    public float tempoCaminhadaInicial = 0.2f;
+    public float incrementoTempoPorRajada = 0.2f;
+    public float tempoAndandoPadrao = 0.8f;
+    public float tempoParadoPadrao = 0.4f;
 }
 
 public class EnemyDifficultySettings : MonoBehaviour
@@ -30,6 +38,7 @@ public class EnemyDifficultySettings : MonoBehaviour
     {
         if (level <= 1) return facil;
         if (level == 2) return medio;
-        return dificil;
+        if (level == 3) return dificil;
+        return mutante;
     }
 }

@@ -427,6 +427,7 @@ GameObject:
   - component: {fileID: 458211925}
   - component: {fileID: 458211924}
   - component: {fileID: 458211923}
+  - component: {fileID: 458211926}
   m_Layer: 5
   m_Name: Leaderbord
   m_TagString: Untagged
@@ -548,6 +549,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 458211921}
   m_CullTransparentMesh: 1
+--- !u!114 &458211926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 458211921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: ba120409cf481ac47ae20392f27eb37b, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!1 &525236474
 GameObject:
   m_ObjectHideFlags: 0
@@ -583,7 +600,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &525236476
 MonoBehaviour:
@@ -605,17 +622,17 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Confirmar
+  m_text: Confirm
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 506cc06249a38ed4f8067108499fdb1f, type: 2}
+  m_sharedMaterial: {fileID: -262028427497307194, guid: 506cc06249a38ed4f8067108499fdb1f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -632,14 +649,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
+  m_fontSize: 18
   m_fontSizeBase: 24
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -951,6 +968,7 @@ GameObject:
   - component: {fileID: 715829488}
   - component: {fileID: 715829487}
   - component: {fileID: 715829486}
+  - component: {fileID: 715829489}
   m_Layer: 5
   m_Name: Confirmar
   m_TagString: Untagged
@@ -1054,7 +1072,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 6002999199881012269, guid: 84c7db11fd5cf1647ad175c4ffd61208, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1063,7 +1081,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 32
 --- !u!222 &715829488
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1072,6 +1090,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 715829484}
   m_CullTransparentMesh: 1
+--- !u!114 &715829489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715829484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: ba120409cf481ac47ae20392f27eb37b, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!1 &733342095
 GameObject:
   m_ObjectHideFlags: 0
@@ -1107,7 +1141,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 800, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &733342097
 MonoBehaviour:
@@ -1129,7 +1163,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Username: Lexdian#9999'
+  m_text: 'Username:'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1740,6 +1774,7 @@ GameObject:
   - component: {fileID: 1144866355}
   - component: {fileID: 1144866354}
   - component: {fileID: 1144866353}
+  - component: {fileID: 1144866356}
   m_Layer: 5
   m_Name: Start
   m_TagString: Untagged
@@ -1861,6 +1896,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1144866351}
   m_CullTransparentMesh: 1
+--- !u!114 &1144866356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144866351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: ba120409cf481ac47ae20392f27eb37b, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!1 &1240963649
 GameObject:
   m_ObjectHideFlags: 0
@@ -2010,6 +2061,7 @@ GameObject:
   - component: {fileID: 1311952007}
   - component: {fileID: 1311952006}
   - component: {fileID: 1311952005}
+  - component: {fileID: 1311952008}
   m_Layer: 5
   m_Name: Achivements
   m_TagString: Untagged
@@ -2131,6 +2183,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1311952003}
   m_CullTransparentMesh: 1
+--- !u!114 &1311952008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1311952003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: ba120409cf481ac47ae20392f27eb37b, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!1 &1487889077
 GameObject:
   m_ObjectHideFlags: 0
@@ -2938,7 +3006,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -50}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 250, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1788307167
 MonoBehaviour:
@@ -2960,10 +3028,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Escolha seu \nnome"
+  m_text: 'Choose your
+
+    name'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 506cc06249a38ed4f8067108499fdb1f, type: 2}
+  m_sharedMaterial: {fileID: -262028427497307194, guid: 506cc06249a38ed4f8067108499fdb1f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3368,6 +3438,7 @@ GameObject:
   - component: {fileID: 2098099966}
   - component: {fileID: 2098099965}
   - component: {fileID: 2098099964}
+  - component: {fileID: 2098099967}
   m_Layer: 5
   m_Name: Quit
   m_TagString: Untagged
@@ -3489,6 +3560,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2098099962}
   m_CullTransparentMesh: 1
+--- !u!114 &2098099967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098099962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: ba120409cf481ac47ae20392f27eb37b, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!1 &2121358219
 GameObject:
   m_ObjectHideFlags: 0
@@ -3499,7 +3586,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2121358222}
   - component: {fileID: 2121358221}
-  - component: {fileID: 2121358220}
   m_Layer: 0
   m_Name: MusicManager
   m_TagString: Untagged
@@ -3507,103 +3593,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!82 &2121358220
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2121358219}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 82c3c82d3b7bf33429a6e7e349201f95, type: 3}
-  m_PlayOnAwake: 1
-  m_Volume: 0.6
-  m_Pitch: 1
-  Loop: 1
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!114 &2121358221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3616,6 +3605,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eccf7a680652779428f41a8960fde525, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  tocarAoIniciar: 1
+  introMusicaInicial: {fileID: 8300000, guid: eb1069e4541fc2742b33fcd3560d1beb, type: 3}
+  loopMusicaInicial: {fileID: 8300000, guid: 9c26b20db61d08f4fa6fb2fa19af4d9c, type: 3}
+  volumeMaximo: 1
+  duracaoFadePadrao: 3
 --- !u!4 &2121358222
 Transform:
   m_ObjectHideFlags: 0

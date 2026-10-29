@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -10,10 +11,29 @@ public class PlayerMovement : MonoBehaviour
     public AudioClip somTiro;
     public AudioClip somAtivarEspecial;
     public AudioClip somGraze;
+    public AudioClip somMorte;
+    public AudioClip somEscudoQuebrado;
+    public AudioClip somSacrificio;
     [Range(0f, 1f)] public float volumeTiro = 0.5f;
     [Range(0f, 1f)] public float volumeEspecial = 0.8f;
     [Range(0f, 1f)] public float volumeGraze = 0.4f;
+    [Range(0f, 1f)] public float volumeMorte = 0.4f;
+    [Range(0f, 1f)] public float volumeEscudoQuebrado = 0.8f;
+    [Range(0f, 1f)] public float volumeSacrificio = 0.8f;
     private AudioSource audioSource;
+
+    [Header("Trilha Sonora de Morte / Game Over")]
+    [Tooltip("Clip da introdução da música de Game Over (opcional)")]
+    [SerializeField] private AudioClip introMusicaMorte;
+    [Tooltip("Clip do loop da música de Game Over")]
+    [SerializeField] private AudioClip loopMusicaMorte;
+    [Range(0f, 1f)][SerializeField] private float volumeMusicaMorte = 1.0f;
+
+    [Header("Vozes do Anunciador Arcade")]
+    public AudioClip vocOverdrive;
+    public AudioClip vocShieldBroken;
+    public AudioClip vocJackpot;
+    [Range(0f, 1f)] public float volumeAnunciador = 0.8f;
 
     float moveHorizontal;
     float moveVertical;
@@ -35,8 +55,8 @@ public class PlayerMovement : MonoBehaviour
     private float nextFireTime = 0f;
 
     [Header("Efeitos Visuais do Tiro")]
-    [SerializeField] private GameObject muzzleFlashPrefab; // Prefab da explosão/fogo do tiro
-    [SerializeField] private float tempoVidaMuzzleFlash = 0.08f; // Tempo que o efeito dura na tela
+    [SerializeField] private GameObject muzzleFlashPrefab;
+    [SerializeField] private float tempoVidaMuzzleFlash = 0.08f;
 
     [Header("Consumo de Vida por Bônus")]
     [SerializeField] private float aumentoMultiplicadorPorVida = 0.5f;
@@ -44,7 +64,6 @@ public class PlayerMovement : MonoBehaviour
 
     private Animator anim;
     private BulletPool pool;
-
     [SerializeField] private GameObject hitboxVisual;
     private SpriteRenderer hitboxRenderer;
     private Camera mainCam;
@@ -59,6 +78,7 @@ public class PlayerMovement : MonoBehaviour
     private bool canMove = true;
     public bool temEscudo = false;
     public GameObject escudo;
+    public GameObject partesEscudo;
     public int vidas = 3;
 
     [Header("Configurações do Padrão de Tiro")]
@@ -110,7 +130,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Efeito Visual de Sacrifício")]
     [SerializeField] private ParticleSystem particulasSacrificio;
-    [SerializeField] private float duracaoHitStopSacrificio = 0.05f; // Duração do congelamento (ex: 50ms)
+    [SerializeField] private float duracaoHitStopSacrificio = 0.05f;
 
     private Coroutine damageFlashCoroutine;
 
@@ -221,7 +241,7 @@ public class PlayerMovement : MonoBehaviour
         if (!estaUsandoHabilidade)
         {
             float progressoEspecial = (float)Math.Round((especialAtual / especialMaximo), 1);
-            scoreMultiplier = (1f + bonusMultiplicadorBase) + progressoEspecial;
+            scoreMultiplier = Mathf.Round(((1f + bonusMultiplicadorBase) + progressoEspecial) * 10f) / 10f;
         }
 
         if (score >= nextVidaScoreThreshold)
@@ -231,6 +251,26 @@ public class PlayerMovement : MonoBehaviour
         }
 
         AtualizarHistoricoPosicoes();
+    }
+
+    public void GanharPontos(int pontos)
+    {
+        float multExato = Mathf.Round(scoreMultiplier * 10f) / 10f;
+        int pontosCalculados = Mathf.RoundToInt(pontos * multExato);
+        pontosCalculados = Mathf.RoundToInt(pontosCalculados / 10f) * 10;
+
+        Debug.Log($"Ganhou {pontos} pontos base com multiplicador de {multExato:F1}x. Total concedido: {pontosCalculados}");
+
+        if (ScoreBonusManager.Instance != null)
+        {
+            // Adiciona na fila pendente para ser somado na UI somente após o término do efeito visual/texto flutuante
+            ScoreBonusManager.Instance.AdicionarPontosPendentes(pontosCalculados);
+        }
+        else
+        {
+            // Fallback caso o ScoreBonusManager não esteja presente na cena
+            score += pontosCalculados;
+        }
     }
 
     private void VerificarAtracaoTopoTela()
@@ -289,13 +329,14 @@ public class PlayerMovement : MonoBehaviour
     {
         pocStreak++;
 
-        // Calcula a porcentagem do combo de x1 (0.0) até x10 (1.0)
-        float t = Mathf.Clamp01((float)(pocStreak - 1) / 9f);
+        if (pocStreak == 10 && vocJackpot != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(vocJackpot, volumeAnunciador);
+        }
 
-        // Transiciona de Amarelo -> Laranja -> Vermelho
+        float t = Mathf.Clamp01((float)(pocStreak - 1) / 9f);
         Color corCombo = Color.Lerp(Color.yellow, Color.red, t);
 
-        // Transiciona o tamanho da fonte de 2.5f (no x1) até 5.0f (no x10)
         float minFontSize = 2.5f;
         float maxFontSize = 5.0f;
         float tamanhoFonte = Mathf.Lerp(minFontSize, maxFontSize, t);
@@ -319,23 +360,23 @@ public class PlayerMovement : MonoBehaviour
                 scoreMultiplier += (aumentoMultiplicadorPorVida * 2f);
             }
 
-            // 1. Texto Flutuante do Sacrifício
+            if (somSacrificio != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(somSacrificio, volumeSacrificio);
+            }
+
             FloatingTextManager.Show($"SACRIFICE! +{aumentoMultiplicadorPorVida:F1}x", transform.position + new Vector3(0f, 0.5f, 0f), Color.red, 3.5f);
 
-            // 2. Micro-pausa de impacto (HitStop)
             StartCoroutine(ExecutarHitStop(duracaoHitStopSacrificio));
 
-            // 3. Flash Rápido no Sprite (Red Flash)
             if (damageFlashCoroutine != null) StopCoroutine(damageFlashCoroutine);
             damageFlashCoroutine = StartCoroutine(DamageFlashRoutine());
 
-            // 4. Instancia o Anel/Onda Rápida (se configurado)
             if (particulasSacrificio != null)
             {
                 particulasSacrificio.Play();
             }
 
-            // 5. Tremor bem leve na Câmera
             if (CameraShakeController.Instance != null)
             {
                 CameraShakeController.Instance.Shake(0.12f);
@@ -345,7 +386,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Corrotina para o HitStop (Usa WaitForSecondsRealtime para funcionar mesmo com Time.timeScale parado)
     private IEnumerator ExecutarHitStop(float duracao)
     {
         float timeScaleAnterior = Time.timeScale;
@@ -422,6 +462,11 @@ public class PlayerMovement : MonoBehaviour
                 audioSource.PlayOneShot(somAtivarEspecial, volumeEspecial);
             }
 
+            if (vocOverdrive != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(vocOverdrive, volumeAnunciador);
+            }
+
             AtivarHabilidade(true);
         }
 
@@ -477,21 +522,6 @@ public class PlayerMovement : MonoBehaviour
         waveMaterial.SetFloat(nomePropriedadeShader, waveDistanceAtual);
     }
 
-    public void GanharPontos(int pontos)
-    {
-        // Mathf.CeilToInt arredonda qualquer valor decimal para o inteiro acima
-        int pontosCalculados = Mathf.CeilToInt(pontos * scoreMultiplier);
-
-        Debug.Log($"Ganhou {pontos} pontos com multiplicador de {scoreMultiplier}. Então ganhou {pontosCalculados} pontos.");
-
-        if (ScoreBonusManager.Instance != null)
-        {
-            ScoreBonusManager.Instance.AdicionarPontosPendentes(pontosCalculados);
-        }
-
-        score += pontosCalculados;
-    }
-
     void Disparar()
     {
         int quantidadeTiros = Mathf.Clamp(tiros, 1, 5);
@@ -539,7 +569,6 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 posicaoSaida = transform.position + (Vector3)offsetLocal;
 
-        // 1. Instancia a bala
         GameObject bullet = pool.GetBullet();
         if (bullet != null)
         {
@@ -550,13 +579,9 @@ public class PlayerMovement : MonoBehaviour
             bm.SetDirection(Vector2.up);
         }
 
-        // 2. Instancia o Muzzle Flash (Fogo na ponta da nave)
         if (muzzleFlashPrefab != null)
         {
-            // Instanciado como filho (transform) para mover junto com a nave
             GameObject flash = Instantiate(muzzleFlashPrefab, posicaoSaida - new Vector3(0f, 0.2f, 0f), muzzleFlashPrefab.transform.rotation);
-
-            // Faz ser filho da nave mantendo o tamanho original no mundo
             flash.transform.SetParent(transform, true);
             Destroy(flash, tempoVidaMuzzleFlash);
         }
@@ -596,11 +621,29 @@ public class PlayerMovement : MonoBehaviour
             if (temEscudo)
             {
                 temEscudo = false;
+                partesEscudo.SetActive(true);
+
+                if (somEscudoQuebrado != null && audioSource != null)
+                {
+                    audioSource.PlayOneShot(somEscudoQuebrado, volumeEscudoQuebrado);
+                }
+
+                if (vocShieldBroken != null && audioSource != null)
+                {
+                    audioSource.PlayOneShot(vocShieldBroken, volumeAnunciador);
+                }
+
                 StartCoroutine(EfeitoDanoCo());
                 return;
             }
+
+            if (somMorte != null)
+                audioSource.PlayOneShot(somMorte, volumeMorte);
+
             vidas--;
             particulasDano.Play();
+            EnemySpawner.Instance.RegistrarMorteJogador();
+
             if (vidas < 0)
                 Death();
             else
@@ -674,16 +717,34 @@ public class PlayerMovement : MonoBehaviour
 
     private void Death()
     {
+        // Força a consolidação instantânea de todos os pontos pendentes antes de registrar a pontuação final
+        if (ScoreBonusManager.Instance != null)
+        {
+            ScoreBonusManager.Instance.CommitImmediate();
+        }
+
         AchievementManager.Instance.UnlockAchievementsByTarget("score", score);
         GameManager.Instance.HighScore = this.score;
         Debug.Log("Conquista de pontuação desbloqueada!");
-        Time.timeScale = 1f;
-        GameOverScene();
-    }
 
-    void GameOverScene()
-    {
-        SceneManager.LoadScene("GameOver");
+        canMove = false;
+        if (spriteRenderer != null) spriteRenderer.enabled = false;
+        if (hitboxRenderer != null) hitboxRenderer.enabled = false;
+
+        if (MusicManager.Instance != null && (introMusicaMorte != null || loopMusicaMorte != null))
+        {
+            MusicManager.Instance.TrocarMusica(introMusicaMorte, loopMusicaMorte, 1.0f, volumeMusicaMorte);
+        }
+
+        if (GameOverManager.Instance != null)
+        {
+            GameOverManager.Instance.IniciarGameOverSequence();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene("GameOver");
+        }
     }
 
     public void RegistrarGraze()
@@ -698,7 +759,9 @@ public class PlayerMovement : MonoBehaviour
         especialAtual += ganhoGraze;
         especialAtual = Mathf.Clamp(especialAtual, 0, especialMaximo);
         timerUltimoGraze = Time.time;
+        EnemySpawner.Instance.RegistrarGraze();
     }
+
     private IEnumerator DamageFlashRoutine()
     {
         if (spriteRenderer != null)
@@ -706,7 +769,6 @@ public class PlayerMovement : MonoBehaviour
             Color corOriginal = Color.white;
             spriteRenderer.color = Color.red;
 
-            // Realtime para que a cor pisque mesmo se o Time.timeScale estiver zerado no HitStop
             yield return new WaitForSecondsRealtime(0.08f);
 
             spriteRenderer.color = corOriginal;

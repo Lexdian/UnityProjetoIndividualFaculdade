@@ -5,14 +5,17 @@ using UnityEngine;
 public class EnemyBasics : MonoBehaviour
 {
     public float maxHealth = 3;
-    private float currentHealth;
+    public float currentHealth;
     public GameObject coletavel;
     public GameObject coletavelElite;
     private Animator anim;
     private SpriteRenderer spriteRenderer;
     private Vector3 baseScale;
-    public float speedScale = 1;
-    public float fireRateScale = 1;
+
+    [Header("Multiplicadores de Status")]
+    public float speedScale = 1f;
+    public float fireRateScale = 1f;
+    public float bulletSpeedScale = 1f;
 
     [SerializeField] private bool isElite = false;
     private bool isAcelerated = false;
@@ -20,8 +23,9 @@ public class EnemyBasics : MonoBehaviour
     private bool isMutant = false;
     public bool IsMutant { get { return isMutant; } }
     public bool IsGiant { get { return isGiant; } }
+    public bool IsAcelerated { get { return isAcelerated; } }
 
-    private static int resetCount = 0;
+    private static int spawnsDesdeUltimoGigante = 0;
     private Color baseColor = Color.white;
 
     [Header("Configurações da Explosão")]
@@ -35,7 +39,9 @@ public class EnemyBasics : MonoBehaviour
 
     [Header("Sons")]
     public AudioClip somExplosao;
+    public AudioClip somImpacto;
     [Range(0f, 1f)] public float volumeExplosao = 0.7f;
+    [Range(0f, 1f)] public float volumeImpacto = 0.7f;
     public delegate void OnDeathExplosionDelegate(Vector2 position, int minExplosao, int maxExplosao, float offsetRange);
     public OnDeathExplosionDelegate OnDeathExplosion;
 
@@ -58,117 +64,121 @@ public class EnemyBasics : MonoBehaviour
             anim.ResetTrigger("Damaged");
             anim.Play("IdleEnemy", 0, 0f);
         }
+    }
 
-        // Aplica a cor base correta ao reativar no pool
-        if (spriteRenderer != null)
-        {
-            StopMutantBlinkIfNeeded();
-            spriteRenderer.color = baseColor;
-        }
+    private void OnDisable()
+    {
+        // Garante a limpeza total de modificadores antes do objeto voltar ao pool
+        ResetBaseStats();
+    }
+
+    public void Normal()
+    {
+        spawnsDesdeUltimoGigante++;
+        ResetBaseStats();
     }
 
     public void ResetEnemy()
     {
-        resetCount++;
+        Normal();
 
-        // Reseta atributos base antes de aplicar a variação
-        ResetBaseStats();
+        bool forçaGigante = spawnsDesdeUltimoGigante >= 100;
+        float fatorPericia = (EnemySpawner.Instance != null) ? EnemySpawner.Instance.PericiaNormalizada : 0f;
 
-        if (resetCount % 100 == 0)
+        float chanceAcelerado = 0.05f + (fatorPericia * 0.05f);
+        float chanceGigante = 0.005f + (fatorPericia * 0.005f);
+        float chanceMutante = 0.001f + (fatorPericia * 0.002f);
+
+        bool rollAcelerado = UnityEngine.Random.value < chanceAcelerado;
+        bool rollGigante = forçaGigante || (UnityEngine.Random.value < chanceGigante);
+        bool rollMutante = UnityEngine.Random.value < chanceMutante;
+
+        if (rollGigante)
         {
-            Giant();
-            Debug.Log("Giant Enemy Spawned (special)");
-            return;
+            spawnsDesdeUltimoGigante = 0;
+            ApplyGiant();
         }
 
-        int normalValue = UnityEngine.Random.Range(0, 100);
-        if (normalValue < 90)
+        if (rollAcelerado)
         {
-            Normal();
-            Debug.Log("Normal Enemy Spawned");
-            return;
+            ApplyAccelerated();
         }
 
-        int randomValue = UnityEngine.Random.Range(0, 100);
+        if (rollMutante)
+        {
+            ApplyMutant();
+        }
 
-        // 0..44 -> Accelerated (45%)
-        // 45..89 -> Mutant (45%)
-        // 90..99 -> Giant (10%)
-        if (randomValue < 45)
+        if (!isMutant && spriteRenderer != null)
         {
-            Accelerated();
-            Debug.Log("Accelerated Enemy Spawned");
-        }
-        else if (randomValue < 90)
-        {
-            Mutant();
-            Debug.Log("Mutant Enemy Spawned");
-        }
-        else
-        {
-            Giant();
-            Debug.Log("Giant Enemy Spawned");
+            spriteRenderer.color = baseColor;
         }
     }
 
     private void ResetBaseStats()
     {
         StopMutantBlinkIfNeeded();
-        transform.localScale = baseScale; // Garante que volta ao tamanho normal
-        baseColor = Color.white;
-        speedScale = 1f;
-        fireRateScale = 1f;
-        minExplosao = baseMinExplosao;
-        maxExplosao = baseMaxExplosao;
-        offsetRange = baseOffsetRange;
+        if (damageFlashCoroutine != null)
+        {
+            StopCoroutine(damageFlashCoroutine);
+            damageFlashCoroutine = null;
+        }
 
         isGiant = false;
         isAcelerated = false;
         isMutant = false;
-    }
 
-    public void Normal()
-    {
-        ResetBaseStats();
+        transform.localScale = baseScale;
+        baseColor = Color.white;
+        speedScale = 1f;
+        fireRateScale = 1f;
+        bulletSpeedScale = 1f;
         currentHealth = maxHealth;
-        spriteRenderer.color = baseColor;
+
+        minExplosao = baseMinExplosao;
+        maxExplosao = baseMaxExplosao;
+        offsetRange = baseOffsetRange;
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.white;
+        }
+
+        GhostEffect ghost = GetComponent<GhostEffect>();
+        if (ghost != null) ghost.isGhostActive = false;
     }
 
-    public void Giant()
+    private void ApplyGiant()
     {
-        ResetBaseStats();
-        currentHealth = maxHealth * 2;
-
-        // Ajustado: Mais explosões, porém com o offset proporcional ao tamanho do sprite (1.5x)
-        minExplosao = 4;
-        maxExplosao = 6;
-        offsetRange = baseOffsetRange * 1.5f; // Mantém a explosão estritamente dentro da área do Gigante
-
-        transform.localScale = baseScale * 1.5f;
-        speedScale = 0.5f;
-
         isGiant = true;
-        spriteRenderer.color = baseColor;
+
+        float multiplicadorVida = 50f - Mathf.Clamp(maxHealth - 3f, 0f, 12f) * 1.25f;
+        currentHealth = maxHealth * multiplicadorVida;
+
+        minExplosao = 6;
+        maxExplosao = 10;
+        offsetRange = baseOffsetRange * 3f;
+
+        transform.localScale = baseScale * 3f;
+        speedScale *= 0.15f;
     }
 
-    public void Accelerated()
+    private void ApplyAccelerated()
     {
-        ResetBaseStats();
-        currentHealth = maxHealth;
-        baseColor = new Color(1f, 0.92f, 0.45f, 1f); // Amarelado
-        fireRateScale = 2f;
-        speedScale = 1.5f;
-
         isAcelerated = true;
-        spriteRenderer.color = baseColor;
+        baseColor = new Color(1f, 0.92f, 0.45f, 1f);
+
+        speedScale *= 2.0f;
+        fireRateScale *= 2.5f;
+        bulletSpeedScale *= 1.5f;
+
+        GhostEffect ghost = GetComponent<GhostEffect>();
+        if (ghost != null) ghost.isGhostActive = true;
     }
 
-    public void Mutant()
+    private void ApplyMutant()
     {
-        ResetBaseStats();
-        currentHealth = maxHealth;
         isMutant = true;
-
         mutantBlinkCoroutine = StartCoroutine(BlinkGreen());
     }
 
@@ -179,7 +189,7 @@ public class EnemyBasics : MonoBehaviour
         {
             if (spriteRenderer != null) spriteRenderer.color = green;
             yield return new WaitForSeconds(0.25f);
-            if (spriteRenderer != null) spriteRenderer.color = Color.white;
+            if (spriteRenderer != null) spriteRenderer.color = baseColor;
             yield return new WaitForSeconds(0.25f);
         }
     }
@@ -205,33 +215,65 @@ public class EnemyBasics : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (!gameObject.activeInHierarchy) return;
+
         if (collision.gameObject.CompareTag("Bullet"))
         {
-            currentHealth -= collision.GetComponent<BulletMovement>().damage;
+            BulletMovement bm = collision.GetComponent<BulletMovement>();
+            if (bm != null)
+            {
+                currentHealth -= bm.damage;
+            }
+
+            if (somImpacto != null)
+            {
+                AudioSource.PlayClipAtPoint(somImpacto, Camera.main.transform.position, volumeImpacto);
+            }
 
             Vector3 pontoDeContato = collision.ClosestPoint(transform.position);
 
             if (ImpactPool.Instance != null)
             {
-                GameObject impact = ImpactPool.Instance.SpawnImpact(pontoDeContato - new Vector3(0, 0.2f, 0));
-                impact.transform.SetParent(transform);
+                ImpactPool.Instance.SpawnImpact(pontoDeContato - new Vector3(0, 0.2f, 0));
             }
-
-            if (damageFlashCoroutine != null) StopCoroutine(damageFlashCoroutine);
-            damageFlashCoroutine = StartCoroutine(DamageFlashRoutine());
 
             Destroy(collision.gameObject);
 
-            if (currentHealth <= 0) Morrer();
+            if (currentHealth <= 0)
+            {
+                Morrer();
+            }
+            else
+            {
+                if (damageFlashCoroutine != null) StopCoroutine(damageFlashCoroutine);
+                damageFlashCoroutine = StartCoroutine(DamageFlashRoutine());
+            }
         }
     }
 
     void Morrer()
     {
-        // Raio de espalhamento maior para gigantes
-        float raioEspalhamento = isGiant ? 1.2f : 0.6f;
+        if (isGiant)
+        {
+            if (EnemySpawner.Instance != null)
+            {
+                EnemySpawner.Instance.NotificarMorteGigante();
+            }
 
-        // Lógica de Drops com espalhamento
+            GameObject[] balasInimigas = GameObject.FindGameObjectsWithTag("EnemyBullet");
+            foreach (GameObject bala in balasInimigas)
+            {
+                bala.SetActive(false);
+            }
+        }
+
+        if (EnemySpawner.Instance != null)
+        {
+            EnemySpawner.Instance.RegistrarInimigoDerrotado();
+        }
+
+        float raioEspalhamento = isGiant ? 2.0f : 0.6f;
+
         if (isElite)
         {
             if (coletavelElite != null)
@@ -239,12 +281,12 @@ public class EnemyBasics : MonoBehaviour
 
             if (isGiant && coletavel != null)
             {
-                SpawnColetavelComEspalhamento(coletavel, 5, raioEspalhamento);
+                SpawnColetavelComEspalhamento(coletavel, 10, raioEspalhamento);
             }
         }
         else
         {
-            int quantidade = isGiant ? 10 : 1;
+            int quantidade = isGiant ? 25 : 1;
             if (coletavel != null)
             {
                 SpawnColetavelComEspalhamento(coletavel, quantidade, raioEspalhamento);
@@ -253,7 +295,7 @@ public class EnemyBasics : MonoBehaviour
 
         if (CameraShakeController.Instance != null)
         {
-            CameraShakeController.Instance.Shake(isGiant ? 0.5f : 0.2f);
+            CameraShakeController.Instance.Shake(isGiant ? 1.5f : 0.2f);
         }
 
         OnDeathExplosion?.Invoke(transform.position, minExplosao, maxExplosao, offsetRange);
@@ -263,29 +305,60 @@ public class EnemyBasics : MonoBehaviour
             AudioSource.PlayClipAtPoint(somExplosao, Camera.main.transform.position, volumeExplosao);
         }
 
-        // Achievements
         AchievementManager.Instance.AddProgress("enemy_kill", 1);
         if (isElite) AchievementManager.Instance.AddProgress("elite_enemy_kill", 1);
-        if (isGiant) AchievementManager.Instance.AddProgress("giant_enemy_kill", 1);
-        if (isElite && isGiant) AchievementManager.Instance.AddProgress("elite_giant_enemy_kill", 1);
-        if (isAcelerated) AchievementManager.Instance.AddProgress("accelerated_enemy_kill", 1);
-        if (isAcelerated && isElite) AchievementManager.Instance.AddProgress("accelerated_elite_enemy_kill", 1);
-        if (isMutant) AchievementManager.Instance.AddProgress("mutant_enemy_kill", 1);
-        if (isMutant && isElite) AchievementManager.Instance.AddProgress("mutant_elite_enemy_kill", 1);
+
+        if (isGiant)
+        {
+            AchievementManager.Instance.AddProgress("giant_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("elite_giant_enemy_kill", 1);
+        }
+
+        if (isAcelerated)
+        {
+            AchievementManager.Instance.AddProgress("accelerated_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("accelerated_elite_enemy_kill", 1);
+        }
+
+        if (isMutant)
+        {
+            AchievementManager.Instance.AddProgress("mutant_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("mutant_elite_enemy_kill", 1);
+        }
+
+        if (isGiant && isAcelerated && !isMutant)
+        {
+            AchievementManager.Instance.AddProgress("giant_accelerated_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("giant_accelerated_elite_enemy_kill", 1);
+        }
+
+        if (isGiant && isMutant && !isAcelerated)
+        {
+            AchievementManager.Instance.AddProgress("giant_mutant_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("giant_mutant_elite_enemy_kill", 1);
+        }
+
+        if (isAcelerated && isMutant && !isGiant)
+        {
+            AchievementManager.Instance.AddProgress("accelerated_mutant_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("accelerated_mutant_elite_enemy_kill", 1);
+        }
+
+        if (isGiant && isAcelerated && isMutant)
+        {
+            AchievementManager.Instance.AddProgress("triple_threat_enemy_kill", 1);
+            if (isElite) AchievementManager.Instance.AddProgress("triple_threat_elite_enemy_kill", 1);
+        }
 
         gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// Instancia múltiplos coletáveis ao redor da posição do inimigo com um offset aleatório.
-    /// </summary>
     private void SpawnColetavelComEspalhamento(GameObject prefab, int quantidade, float raio)
     {
         if (prefab == null) return;
 
         for (int i = 0; i < quantidade; i++)
         {
-            // Se for apenas 1 item, spawna no centro. Se forem vários, sorteia uma posição no círculo
             Vector2 offset = quantidade > 1 ? UnityEngine.Random.insideUnitCircle * raio : Vector2.zero;
             Vector3 posDrop = transform.position + (Vector3)offset;
 

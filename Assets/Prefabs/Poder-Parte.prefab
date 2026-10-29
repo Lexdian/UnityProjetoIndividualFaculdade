@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7309093179743052629}
   - component: {fileID: 522911380125863277}
   - component: {fileID: 9208265642970621521}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Poder-Parte
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -181,14 +181,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PartePoder
   fallSpeed: 3
   scoreValue: 100
+  initialJumpForce: 4.5
+  gravity: 12
   somColeta: {fileID: 8300000, guid: ca669c99271e0f04984735102e4f8561, type: 3}
   volumeColeta: 0.3
   podeSerAtraido: 0
   isParteDeCima: 1
-  uiCanvasParent: {fileID: 0}
   targetContainerCima: {fileID: 0}
   targetContainerBaixo: {fileID: 0}
-  uiPrefabToAnimate: {fileID: 9017945161495401828, guid: 99a1963ccf9611243884c77aa845dbbf, type: 3}
   duration: 0.8
   peakScale: 1.4
   Tipo: 0

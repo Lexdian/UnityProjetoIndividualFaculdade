@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
+using Unity.Services.Authentication;
+using Unity.Services.CloudSave;
 using UnityEngine;
 using UnityEngine.UI;
-using Unity.Services.CloudSave;
 
 public class MainMenuUIManager : MonoBehaviour
 {
@@ -32,23 +33,30 @@ public class MainMenuUIManager : MonoBehaviour
 
     private async void Start()
     {
-        // Aguarda a inicialização e autenticação do UGS
-        while (!UGSManager.Instance.IsReady)
+        // 1. Aguarda inicialização do UGS
+        while (UGSManager.Instance == null || !UGSManager.Instance.IsReady)
             await Task.Yield();
 
-        // Carrega o nome salvo diretamente do Cloud Save
-        string cloudName = await LoadNameFromCloud();
+        // 2. Busca primeiro se o jogador JÁ salvou um nome manualmente no Cloud Save
+        string savedName = await LoadNameFromCloud();
 
-        if (!string.IsNullOrEmpty(cloudName))
+        // 3. Fallback: Se o Cloud Save falhar no WebGL, checa no PlayerPrefs local
+        if (string.IsNullOrEmpty(savedName))
         {
-            nomeJogador.text = "Username: " + cloudName;
+            savedName = PlayerPrefs.GetString(NAME_KEY, "");
+        }
+
+        // 4. Se encontrou um nome salvo pelo jogador, entra direto no Menu
+        if (!string.IsNullOrEmpty(savedName))
+        {
+            nomeJogador.text = "Username: " + savedName;
             panelName.SetActive(false);
 
-            // Inicia a exibição e animação sem "flicker"
             _ = ShowAndAnimateButtonsAsync();
         }
         else
         {
+            // Primeira vez abrindo o jogo: Força o painel de escolha de nome
             panelPrincipal.SetActive(false);
             panelName.SetActive(true);
         }
@@ -61,16 +69,19 @@ public class MainMenuUIManager : MonoBehaviour
 
         string newName = inputName.text;
 
-        // Salva no UGS/Leaderboard
-        await UGSManager.Instance.SetName(newName);
+        // 1. Envia para o UGS e pega o nome formatado com o # numérico do servidor
+        string officialUgsName = await UGSManager.Instance.SetName(newName);
+        string nameToDisplay = !string.IsNullOrEmpty(officialUgsName) ? officialUgsName : newName;
 
-        // Salva a chave no Unity Cloud Save
-        await SaveNameToCloud(newName);
+        // 2. Salva a escolha tanto no Cloud Save quanto no PlayerPrefs local do navegador
+        await SaveNameToCloud(nameToDisplay);
+        PlayerPrefs.SetString(NAME_KEY, nameToDisplay);
+        PlayerPrefs.Save();
 
-        nomeJogador.text = "Username: " + newName;
+        // 3. Atualiza a UI e mostra os botões do menu
+        nomeJogador.text = "Username: " + nameToDisplay;
         panelName.SetActive(false);
 
-        // Inicia a exibição e animação sem "flicker"
         _ = ShowAndAnimateButtonsAsync();
     }
 
@@ -78,11 +89,9 @@ public class MainMenuUIManager : MonoBehaviour
     {
         RectTransform[] buttons = new RectTransform[] { button1, button2, button3, button4 };
 
-        // 1. Oculta o painel visualmente antes de ativá-lo
         buttonsCanvasGroup.alpha = 0f;
         panelPrincipal.SetActive(true);
 
-        // 2. Força o Unity a calcular o layout dos botões instantaneamente em segundo plano
         VerticalLayoutGroup layoutGroup = panelPrincipal.GetComponentInChildren<VerticalLayoutGroup>();
         if (layoutGroup != null)
         {
@@ -90,7 +99,6 @@ public class MainMenuUIManager : MonoBehaviour
         }
         Canvas.ForceUpdateCanvases();
 
-        // 3. Salva as posições calculadas e desloca os botões para fora da tela
         Vector2[] targetPositions = new Vector2[buttons.Length];
         Vector2[] startPositions = new Vector2[buttons.Length];
 
@@ -102,23 +110,19 @@ public class MainMenuUIManager : MonoBehaviour
             startPositions[i] = new Vector2(targetPositions[i].x - offscreenOffset, targetPositions[i].y);
         }
 
-        // Desativa o LayoutGroup para não travar as posições dos botões
         if (layoutGroup != null)
         {
             layoutGroup.enabled = false;
         }
 
-        // Aplica a posição inicial (fora da tela à esquerda)
         for (int i = 0; i < buttons.Length; i++)
         {
             if (buttons[i] == null) continue;
             buttons[i].anchoredPosition = startPositions[i];
         }
 
-        // 4. Revela o CanvasGroup agora que os botões já estão posicionados fora da tela
         buttonsCanvasGroup.alpha = 1f;
 
-        // 5. Anima a entrada dos botões um a um
         for (int i = 0; i < buttons.Length; i++)
         {
             if (buttons[i] == null) continue;
@@ -139,7 +143,6 @@ public class MainMenuUIManager : MonoBehaviour
 
             buttons[i].anchoredPosition = targetPos;
 
-            // Espera o tempo configurado antes de animar o próximo botão
             if (staggerDelay > 0f)
             {
                 float delayTimer = 0f;
@@ -151,7 +154,6 @@ public class MainMenuUIManager : MonoBehaviour
             }
         }
 
-        // Reativa o LayoutGroup ao final da animação
         if (layoutGroup != null)
         {
             layoutGroup.enabled = true;

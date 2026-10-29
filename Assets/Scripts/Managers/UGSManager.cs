@@ -10,6 +10,7 @@ public class UGSManager : MonoBehaviour
 
     private string leaderboardId = "InfinityScore";
     public bool IsReady { get; private set; } = false;
+
     async void Awake()
     {
         // Singleton pattern
@@ -33,8 +34,19 @@ public class UGSManager : MonoBehaviour
         await SignUpAnonymouslyAsync();
 
         IsReady = true;
-        var playerScore = await LeaderboardsService.Instance.GetPlayerScoreAsync(leaderboardId);
-        GameManager.Instance.HighScore = playerScore != null ? (int)playerScore.Score : 0;
+
+        try
+        {
+            var playerScore = await LeaderboardsService.Instance.GetPlayerScoreAsync(leaderboardId);
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.HighScore = playerScore != null ? (int)playerScore.Score : 0;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"Aviso ao obter HighScore inicial: {e.Message}");
+        }
     }
 
     async Task SignUpAnonymouslyAsync()
@@ -72,31 +84,39 @@ public class UGSManager : MonoBehaviour
         }
     }
 
-    public async Task SetName(string nome)
+    /// <summary>
+    /// Atualiza o nome do jogador no UGS e retorna a string oficial formatada com #numeração
+    /// </summary>
+    public async Task<string> SetName(string nome)
     {
         try
         {
-            await AuthenticationService.Instance.UpdatePlayerNameAsync(nome);
-            Debug.Log("Nome atualizado!");
+            string nomeOficial = await AuthenticationService.Instance.UpdatePlayerNameAsync(nome);
+            Debug.Log("Nome atualizado no UGS: " + nomeOficial);
+            return nomeOficial;
         }
         catch (System.Exception e)
         {
-            Debug.LogError("Erro ao definir nome: " + e.Message);
+            Debug.LogError("Erro ao definir nome no UGS: " + e.Message);
+            return nome;
         }
     }
 
-    public string GetName()
+    /// <summary>
+    /// Requisita ao servidor do UGS o nome oficial do jogador formatado com o sufixo (#XXXX)
+    /// </summary>
+    public async Task<string> GetName()
     {
         try
         {
-            string playerName = AuthenticationService.Instance.PlayerName;
-            Debug.Log("Nome do jogador: " + playerName);
+            string playerName = await AuthenticationService.Instance.GetPlayerNameAsync();
+            Debug.Log("Nome do jogador obtido do UGS: " + playerName);
             return playerName;
         }
         catch (System.Exception e)
         {
-            Debug.LogError("Erro ao obter nome: " + e.Message);
-            return null;
+            Debug.LogError("Erro ao obter nome do UGS: " + e.Message);
+            return AuthenticationService.Instance.PlayerName;
         }
     }
 }

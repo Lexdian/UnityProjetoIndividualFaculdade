@@ -394,6 +394,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2207682621693707725, guid: c86cd7afbcf23b24981180190c8a9e99, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8720338679584171745}
+    - targetCorrespondingSourceObject: {fileID: 2207682621693707725, guid: c86cd7afbcf23b24981180190c8a9e99, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4663923574827954216}
   m_SourcePrefab: {fileID: 100100000, guid: c86cd7afbcf23b24981180190c8a9e99, type: 3}
 --- !u!114 &6823340867003878979 stripped
 MonoBehaviour:
@@ -489,6 +492,22 @@ MonoBehaviour:
   selectedScale: {x: 1.05, y: 1.05, z: 1.05}
   pressedScale: {x: 1.05, y: 1.05, z: 1.05}
   duration: 0.15
+--- !u!114 &-4663923574827954216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7356075119319803965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4d5c9b8e3ce214ca1d372feac18d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSound: {fileID: 8300000, guid: 0775c7b377d03b3438b1793a54263e93, type: 3}
+  clickSound: {fileID: 8300000, guid: ba120409cf481ac47ae20392f27eb37b, type: 3}
+  volume: 0.7
+  audioSource: {fileID: 0}
 --- !u!224 &9124689335285018537 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 438023880721515097, guid: c86cd7afbcf23b24981180190c8a9e99, type: 3}

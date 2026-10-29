@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class BulletSpawner : MonoBehaviour
 {
-    public GameObject bulletPrefab;
     public float bulletLifetime = 3f;
     public Transform target;
     public float minYToShoot = -2f;
@@ -13,10 +12,23 @@ public class BulletSpawner : MonoBehaviour
     [Range(0f, 1f)] public float volumeTiro = 0.4f;
     private AudioSource audioSource;
 
+    [Header("Escalonamento para Balas de Parar (Stop Pattern)")]
+    [Tooltip("Ativa o aumento progressivo do alcance antes da 1ª parada")]
+    public bool usarEscalonamentoStop = true;
+    [Tooltip("Tempo de caminhada da 1ª rajada (anda pouco)")]
+    public float tempoCaminhadaInicial = 0.2f;
+    [Tooltip("Quanto tempo é somado a cada nova rajada no disparo (ex: 0.2s -> +0.2s = 0.4s)")]
+    public float incrementoTempoPorRajada = 0.2f;
+    [Tooltip("Tempo padrão de caminhada nos ciclos seguintes")]
+    public float tempoAndandoPadrao = 0.8f;
+    [Tooltip("Tempo que a bala fica travada no ar em cada parada")]
+    public float tempoParadoPadrao = 0.4f;
+
     private float timer;
     private BulletPool pool;
 
     // Variáveis do Pattern
+    private GameObject bulletPrefab;
     private bool aimAtPlayer;
     private int directionsCount;
     private int bulletsPerBurst;
@@ -38,27 +50,22 @@ public class BulletSpawner : MonoBehaviour
         currentVolleyCount = 0;
         isResting = false;
 
-        // Inicializa áudio
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
-
-        if (pool == null)
-        {
-            pool = gameObject.AddComponent<BulletPool>();
-            pool.bulletPrefab = bulletPrefab;
-            pool.Initialize(100);
-        }
 
         if (target == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
             if (p != null) target = p.transform;
         }
+
+        AtualizarBulletPool();
     }
 
     public void ApplyPattern(ShootingPattern p)
     {
+        bulletPrefab = p.bullet;
         aimAtPlayer = p.aimAtPlayer;
         directionsCount = p.directions;
         bulletsPerBurst = p.burst;
@@ -71,9 +78,34 @@ public class BulletSpawner : MonoBehaviour
         shotsPerVolley = p.shotsPerVolley;
         timeBetweenVolleys = p.timeBetweenVolleys;
 
+        usarEscalonamentoStop = p.usarEscalonamentoStop;
+        tempoCaminhadaInicial = p.tempoCaminhadaInicial;
+        incrementoTempoPorRajada = p.incrementoTempoPorRajada;
+        tempoAndandoPadrao = p.tempoAndandoPadrao;
+        tempoParadoPadrao = p.tempoParadoPadrao;
+
         if (angleStep == 0f)
         {
             angleStep = (directionsCount > 1) ? 360f / directionsCount : 0f;
+        }
+
+        AtualizarBulletPool();
+    }
+
+    private void AtualizarBulletPool()
+    {
+        if (bulletPrefab == null) return;
+
+        if (pool == null)
+        {
+            pool = GetComponent<BulletPool>();
+            if (pool == null) pool = gameObject.AddComponent<BulletPool>();
+        }
+
+        if (pool.bulletPrefab != bulletPrefab)
+        {
+            pool.bulletPrefab = bulletPrefab;
+            pool.Initialize(100);
         }
     }
 
@@ -83,8 +115,13 @@ public class BulletSpawner : MonoBehaviour
 
         transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
 
+        // Obtém o multiplicador de cadência de tiro do inimigo (Acelerado atira mais rápido)
+        EnemyBasics eb = GetComponentInParent<EnemyBasics>();
+        float fireRateMult = (eb != null) ? eb.fireRateScale : 1f;
+
         timer += Time.deltaTime;
-        float currentWaitTime = isResting ? timeBetweenVolleys : fireRate;
+        float baseWaitTime = isResting ? timeBetweenVolleys : fireRate;
+        float currentWaitTime = baseWaitTime / fireRateMult; // Reduz o tempo de espera conforme o fireRateScale aumenta
 
         if (timer >= currentWaitTime)
         {
@@ -105,20 +142,24 @@ public class BulletSpawner : MonoBehaviour
 
     void Shoot()
     {
-        // Toca o som uma vez por "disparo" (independente de quantas direções saem)
-        // Isso evita que o som fique "estourado" em disparos circulares
+        if (pool == null || bulletPrefab == null) return;
+
         if (somTiroInimigo != null && audioSource != null)
         {
             audioSource.PlayOneShot(somTiroInimigo, volumeTiro);
         }
 
-        // Detecta se quem está atirando é um inimigo gigante (procura em si mesmo e pais)
         bool shooterIsGiant = false;
+        float bulletSpeedScale = 1f;
+
         EnemyBasics eb = GetComponentInParent<EnemyBasics>();
         if (eb != null)
         {
             shooterIsGiant = eb.IsGiant;
+            bulletSpeedScale = eb.bulletSpeedScale; // Coleta a escala de velocidade do projétil do inimigo
         }
+
+        float tempoPrimeiraCaminhadaCalculado = tempoCaminhadaInicial + (currentVolleyCount * incrementoTempoPorRajada);
 
         float baseAngle = -90f;
 
@@ -127,6 +168,7 @@ public class BulletSpawner : MonoBehaviour
             Vector2 dirToTarget = (target.position - transform.position).normalized;
             baseAngle = Mathf.Atan2(dirToTarget.y, dirToTarget.x) * Mathf.Rad2Deg;
         }
+
         for (int i = 0; i < directionsCount; i++)
         {
             float currentDirectionAngle = baseAngle - (directionsCount - 1) * angleStep / 2f + (i * angleStep) + transform.eulerAngles.z;
@@ -144,17 +186,30 @@ public class BulletSpawner : MonoBehaviour
                 {
                     bullet.transform.position = transform.position;
                     BulletMovement bm = bullet.GetComponent<BulletMovement>();
-                    bm.SetPool(pool);
-                    bm.TimeToDeath = bulletLifetime;
-
-                    float finalSpeed = baseSpeed + (b * speedIncrement);
-                    bm.SetDirection(moveDir, finalSpeed);
-
-                    // Se o atirador for gigante, aumenta a escala da bala aqui
-                    if (shooterIsGiant && bm != null)
+                    if (bm != null)
                     {
-                        // aplica fator configurável presente em BulletMovement
-                        bm.SetGiant(true);
+                        bm.SetPool(pool);
+                        bm.TimeToDeath = bulletLifetime;
+
+                        float finalSpeed = baseSpeed + (b * speedIncrement);
+                        bm.SetDirection(moveDir, finalSpeed);
+
+                        // Aplica o multiplicador de velocidade da bala do inimigo (ex: Acelerado)
+                        bm.SetSpeedMultiplier(bulletSpeedScale);
+
+                        if (shooterIsGiant)
+                        {
+                            bm.SetGiant(true);
+                        }
+                    }
+
+                    if (usarEscalonamentoStop)
+                    {
+                        BulletMovementStop bStop = bullet.GetComponent<BulletMovementStop>();
+                        if (bStop != null)
+                        {
+                            bStop.ConfigurarEscalonamento(tempoPrimeiraCaminhadaCalculado, tempoAndandoPadrao, tempoParadoPadrao);
+                        }
                     }
                 }
             }
